@@ -220,7 +220,7 @@ class JoditConnectorController extends Controller
                 return $this->error('Could not delete the folder.');
             }
 
-            return response()->json(['success' => true]);
+            return response()->json(['success' => true, 'data' => []]);
         }
 
         if (Storage::disk($this->disk)->exists($target)) {
@@ -228,7 +228,7 @@ class JoditConnectorController extends Controller
                 return $this->error('Could not delete the file.');
             }
 
-            return response()->json(['success' => true]);
+            return response()->json(['success' => true, 'data' => []]);
         }
 
         return $this->error('File or folder not found.');
@@ -253,7 +253,7 @@ class JoditConnectorController extends Controller
 
         Storage::disk($this->disk)->move($oldPath, $newPath);
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'data' => []]);
     }
 
     protected function actionCreate(Request $request): JsonResponse
@@ -267,7 +267,7 @@ class JoditConnectorController extends Controller
 
         Storage::disk($this->disk)->makeDirectory($path.'/'.$name);
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'data' => []]);
     }
 
     protected function actionMove(Request $request): JsonResponse
@@ -292,7 +292,7 @@ class JoditConnectorController extends Controller
 
         Storage::disk($this->disk)->move($oldPath, $newPath);
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'data' => []]);
     }
 
     protected function actionResize(Request $request): JsonResponse
@@ -329,7 +329,7 @@ class JoditConnectorController extends Controller
 
         $image->save($absolutePath);
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'data' => []]);
     }
 
     protected function actionCrop(Request $request): JsonResponse
@@ -360,7 +360,7 @@ class JoditConnectorController extends Controller
         $image->crop($width ?: 100, $height ?: 100, $x, $y);
         $image->save($absolutePath);
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'data' => []]);
     }
 
     // ---------------------------------------------------------------

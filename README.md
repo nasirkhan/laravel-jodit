@@ -1,8 +1,15 @@
 # Laravel Jodit
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/nasirkhan/laravel-jodit.svg?style=flat-square)](https://packagist.org/packages/nasirkhan/laravel-jodit)
+[![Total Downloads](https://img.shields.io/packagist/dt/nasirkhan/laravel-jodit.svg?style=flat-square)](https://packagist.org/packages/nasirkhan/laravel-jodit)
+[![License](https://img.shields.io/packagist/l/nasirkhan/laravel-jodit.svg?style=flat-square)](https://packagist.org/packages/nasirkhan/laravel-jodit)
+
 A Laravel package that integrates the [Jodit](https://xdsoft.net/jodit/) WYSIWYG editor via a reusable Blade component. Works seamlessly in plain Blade templates, Blade view components, and Livewire components, with a built-in server-side file browser/uploader connector.
 
 This package is used in [Laravel Starter](https://github.com/nasirkhan/laravel-starter) though it is framework-agnostic and can be dropped into any Laravel app.
+
+Packagist: [nasirkhan/laravel-jodit](https://packagist.org/packages/nasirkhan/laravel-jodit)  
+Tags: `laravel`, `jodit`, `wysiwyg`, `editor`, `blade`, `livewire`, `rich-text`, `file-browser`
 
 ---
 
@@ -13,6 +20,7 @@ This package is used in [Laravel Starter](https://github.com/nasirkhan/laravel-s
 - **File browser + uploads** — bundled connector controller; configurable storage disk and path
 - **CDN assets** — loads Jodit CSS/JS from unpkg; no build step required
 - **Fully configurable** — publish the config to override defaults, CDN URLs, middleware, etc.
+- **Flexible toolbar buttons** — supports named profiles, custom button arrays, separators, and dropdown-friendly controls like `align`
 
 ---
 
@@ -126,6 +134,23 @@ You can pass the `buttons` prop as a **PHP array** (`:buttons=`), a **JSON strin
 
 {{-- JSON string --}}
 <x-jodit::editor name="content" buttons='["bold", "italic", "underline", "|", "link", "image"]' />
+```
+
+### Common toolbar examples
+
+Use `align` when you want a single alignment dropdown instead of separate `left`, `center`, `right`, and `justify` buttons:
+
+```blade
+<x-jodit::editor
+    name="content"
+    :buttons="['bold', 'italic', '|', 'align', '|', 'ul', 'ol', '|', 'link', 'image']"
+/>
+```
+
+Use the package's richer preset when you want the full toolbar profile:
+
+```blade
+<x-jodit::editor name="content" profile="full" />
 ```
 
 ---
@@ -248,6 +273,7 @@ Use any of the names below in your `buttons` array. Use `|` as a visual separato
 
 | Name | Description |
 |---|---|
+| `align` | Alignment dropdown (`left`, `center`, `right`, `justify`) |
 | `left` | Align left |
 | `center` | Align centre |
 | `right` | Align right |
@@ -323,6 +349,22 @@ Use any of the names below in your `buttons` array. Use `|` as a visual separato
     'paragraph', 'brush', '|',
     'link', 'image', '|',
     'undo', 'redo',
+],
+```
+
+**Example — full editing toolbar:**
+
+```php
+'buttons' => [
+    'source', '|',
+    'bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript', 'eraser', '|',
+    'paragraph', 'font', 'fontsize', 'brush', 'classSpan', '|',
+    'align', '|',
+    'ul', 'ol', 'indent', 'outdent', '|',
+    'cut', 'copy', 'paste', 'selectall', '|',
+    'link', 'image', 'video', 'file', 'table', 'hr', 'symbols', '|',
+    'undo', 'redo', '|',
+    'find', 'spellcheck', 'speech', 'preview', 'print', 'fullsize',
 ],
 ```
 

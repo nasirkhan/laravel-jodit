@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Intervention\Image\Laravel\Facades\Image;
 
 /**
  * Server-side connector for the Jodit file browser.
@@ -24,7 +25,7 @@ class JoditConnectorController extends Controller
 
     public function __construct()
     {
-        $this->disk     = config('jodit.disk', 'public');
+        $this->disk = config('jodit.disk', 'public');
         $this->basePath = config('jodit.base_path', 'jodit');
     }
 
@@ -37,16 +38,16 @@ class JoditConnectorController extends Controller
         $action = (string) ($request->input('action') ?: 'files');
 
         return match ($action) {
-            'files'   => $this->actionFiles($request),
+            'files' => $this->actionFiles($request),
             'folders' => $this->actionFolders($request),
-            'upload'  => $this->actionUpload($request),
-            'remove'  => $this->actionRemove($request),
-            'rename'  => $this->actionRename($request),
-            'create'  => $this->actionCreate($request),
-            'move'    => $this->actionMove($request),
-            'resize'  => $this->actionResize($request),
-            'crop'    => $this->actionCrop($request),
-            default   => $this->sourceResponse($this->resolvedPath($request), [], []),
+            'upload' => $this->actionUpload($request),
+            'remove' => $this->actionRemove($request),
+            'rename' => $this->actionRename($request),
+            'create' => $this->actionCreate($request),
+            'move' => $this->actionMove($request),
+            'resize' => $this->actionResize($request),
+            'crop' => $this->actionCrop($request),
+            default => $this->sourceResponse($this->resolvedPath($request), [], []),
         };
     }
 
@@ -57,20 +58,32 @@ class JoditConnectorController extends Controller
     protected function actionFiles(Request $request): JsonResponse
     {
         $path = $this->resolvedPath($request);
+        $type = (string) $request->input('type', 'all');
         $this->ensureDirectory($path);
 
         $files = collect(Storage::disk($this->disk)->files($path))
             ->map(function (string $file): array {
-                $name    = basename($file);
+                $name = basename($file);
                 $isImage = $this->isImage($name);
 
                 return [
-                    'file'    => $name,
-                    'thumb'   => $isImage ? $name : null,
+                    'file' => $name,
+                    'thumb' => $isImage ? $name : null,
                     'changed' => date('m/d/Y g:i A', Storage::disk($this->disk)->lastModified($file)),
-                    'size'    => $this->formatBytes(Storage::disk($this->disk)->size($file)),
+                    'size' => $this->formatBytes(Storage::disk($this->disk)->size($file)),
                     'isImage' => $isImage,
                 ];
+            })
+            ->filter(function (array $item) use ($type): bool {
+                if ($type === 'images') {
+                    return $item['isImage'];
+                }
+
+                if ($type === 'files') {
+                    return ! $item['isImage'];
+                }
+
+                return true;
             })
             ->values()
             ->all();
@@ -93,11 +106,11 @@ class JoditConnectorController extends Controller
 
     protected function actionUpload(Request $request): JsonResponse
     {
-        $maxSize      = (int) config('jodit.max_file_size', 10240);
+        $maxSize = (int) config('jodit.max_file_size', 10240);
         $allowedMimes = config('jodit.allowed_mimes', 'jpeg,jpg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,zip,txt');
 
         $request->validate([
-            'files'   => 'required',
+            'files' => 'required',
             'files.*' => "file|max:{$maxSize}|mimes:{$allowedMimes}",
         ]);
 
@@ -116,11 +129,11 @@ class JoditConnectorController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'baseurl'     => '',
+            'data' => [
+                'baseurl' => '',
                 'newfilename' => basename($uploaded[0] ?? ''),
-                'files'       => $uploaded,
-                'isImages'    => $isImages,
+                'files' => $uploaded,
+                'isImages' => $isImages,
             ],
         ]);
     }
@@ -153,8 +166,8 @@ class JoditConnectorController extends Controller
 
     protected function actionRename(Request $request): JsonResponse
     {
-        $path    = $this->resolvedPath($request);
-        $name    = basename((string) $request->input('name', ''));
+        $path = $this->resolvedPath($request);
+        $name = basename((string) $request->input('name', ''));
         $newName = basename((string) $request->input('newname', ''));
 
         if (! $name || ! $newName) {
@@ -192,8 +205,8 @@ class JoditConnectorController extends Controller
         $path = $this->resolvedPath($request);
         $name = basename((string) $request->input('name', ''));
 
-        $rawNewPath  = ltrim((string) $request->input('newpath', '/'), '/');
-        $rawNewPath  = str_replace(['../', '..'.DIRECTORY_SEPARATOR, '..'], '', $rawNewPath);
+        $rawNewPath = ltrim((string) $request->input('newpath', '/'), '/');
+        $rawNewPath = str_replace(['../', '..'.DIRECTORY_SEPARATOR, '..'], '', $rawNewPath);
         $newBasePath = trim($this->basePath.'/'.$rawNewPath, '/');
 
         if (! $name) {
@@ -214,13 +227,13 @@ class JoditConnectorController extends Controller
 
     protected function actionResize(Request $request): JsonResponse
     {
-        if (! class_exists(\Intervention\Image\Laravel\Facades\Image::class)) {
+        if (! class_exists(Image::class)) {
             return $this->error('Install intervention/image-laravel to enable image resize.');
         }
 
-        $path   = $this->resolvedPath($request);
-        $name   = basename((string) $request->input('name', ''));
-        $width  = (int) $request->input('width', 0);
+        $path = $this->resolvedPath($request);
+        $name = basename((string) $request->input('name', ''));
+        $width = (int) $request->input('width', 0);
         $height = (int) $request->input('height', 0);
 
         if (! $name) {
@@ -234,7 +247,7 @@ class JoditConnectorController extends Controller
         }
 
         $absolutePath = Storage::disk($this->disk)->path($filePath);
-        $image        = \Intervention\Image\Laravel\Facades\Image::read($absolutePath);
+        $image = Image::read($absolutePath);
 
         if ($width && $height) {
             $image->scale(width: $width, height: $height);
@@ -251,16 +264,16 @@ class JoditConnectorController extends Controller
 
     protected function actionCrop(Request $request): JsonResponse
     {
-        if (! class_exists(\Intervention\Image\Laravel\Facades\Image::class)) {
+        if (! class_exists(Image::class)) {
             return $this->error('Install intervention/image-laravel to enable image crop.');
         }
 
-        $path   = $this->resolvedPath($request);
-        $name   = basename((string) $request->input('name', ''));
-        $width  = (int) $request->input('width', 0);
+        $path = $this->resolvedPath($request);
+        $name = basename((string) $request->input('name', ''));
+        $width = (int) $request->input('width', 0);
         $height = (int) $request->input('height', 0);
-        $x      = (int) $request->input('x', 0);
-        $y      = (int) $request->input('y', 0);
+        $x = (int) $request->input('x', 0);
+        $y = (int) $request->input('y', 0);
 
         if (! $name) {
             return $this->error('Name is required.');
@@ -273,7 +286,7 @@ class JoditConnectorController extends Controller
         }
 
         $absolutePath = Storage::disk($this->disk)->path($filePath);
-        $image        = \Intervention\Image\Laravel\Facades\Image::read($absolutePath);
+        $image = Image::read($absolutePath);
         $image->crop($width ?: 100, $height ?: 100, $x, $y);
         $image->save($absolutePath);
 
@@ -308,19 +321,19 @@ class JoditConnectorController extends Controller
      */
     protected function sourceResponse(string $storagePath, array $files, array $folders): JsonResponse
     {
-        $displayPath   = ltrim(Str::after($storagePath, $this->basePath), '/') ?: '/';
-        $baseUrl       = '/storage/'.rtrim($storagePath, '/').'/';
+        $displayPath = ltrim(Str::after($storagePath, $this->basePath), '/') ?: '/';
+        $baseUrl = '/storage/'.rtrim($storagePath, '/').'/';
         $folderObjects = array_map(fn (string $name): array => ['name' => $name], $folders);
 
         return response()->json([
             'success' => true,
-            'data'    => [
+            'data' => [
                 'sources' => [
                     [
-                        'name'    => 'default',
-                        'path'    => $displayPath,
+                        'name' => 'default',
+                        'path' => $displayPath,
                         'baseurl' => $baseUrl,
-                        'files'   => $files,
+                        'files' => $files,
                         'folders' => $folderObjects,
                     ],
                 ],

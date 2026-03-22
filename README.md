@@ -1,6 +1,8 @@
-# laravel-jodit
+# Laravel Jodit
 
 A Laravel package that integrates the [Jodit](https://xdsoft.net/jodit/) WYSIWYG editor via a reusable Blade component. Works seamlessly in plain Blade templates, Blade view components, and Livewire components, with a built-in server-side file browser/uploader connector.
+
+This package is used in [Laravel Starter](https://github.com/nasirkhan/laravel-starter) though it is framework-agnostic and can be dropped into any Laravel app.
 
 ---
 
@@ -17,7 +19,7 @@ A Laravel package that integrates the [Jodit](https://xdsoft.net/jodit/) WYSIWYG
 ## Requirements
 
 - PHP 8.2+
-- Laravel 11 / 12 / 13
+- Laravel 11 or 12
 - `intervention/image-laravel ^1.5` — only required for image **resize** and **crop** features
 
 ---
@@ -108,8 +110,23 @@ Inside a Livewire component the wrapper is automatically set to `wire:ignore` so
 | `connector-url` | string | auto from config | Override the connector endpoint URL |
 | `wire-model` | string | `null` | Livewire model property to keep in sync |
 | `required` | bool | `false` | Add `required` attribute to the textarea |
-| `buttons` | array | config default | Custom toolbar button list |
+| `buttons` | array\|string | config default | Custom toolbar button list (see [Buttons Reference](#buttons-reference)) |
 | `debounce` | int | `300` | Livewire sync debounce in milliseconds |
+
+### Passing buttons
+
+You can pass the `buttons` prop as a **PHP array** (`:buttons=`), a **JSON string**, or a **PHP-style array string**:
+
+```blade
+{{-- PHP array (recommended) --}}
+<x-jodit::editor name="content" :buttons="['bold', 'italic', 'underline', '|', 'link', 'image']" />
+
+{{-- PHP-style array string (no colon prefix needed) --}}
+<x-jodit::editor name="content" buttons="['bold', 'italic', 'underline', '|', 'link', 'image']" />
+
+{{-- JSON string --}}
+<x-jodit::editor name="content" buttons='["bold", "italic", "underline", "|", "link", "image"]' />
+```
 
 ---
 
@@ -207,6 +224,159 @@ Or set a global default in `config/jodit.php`:
     'enabled' => false,
     'name'    => 'backend.jodit.connector',  // used by component when no connector-url prop
 ],
+```
+
+---
+
+## Buttons Reference
+
+Use any of the names below in your `buttons` array. Use `|` as a visual separator between groups.
+
+### Text Formatting
+
+| Name | Description |
+|---|---|
+| `bold` | Bold |
+| `italic` | Italic |
+| `underline` | Underline |
+| `strikethrough` | Strikethrough |
+| `superscript` | Superscript |
+| `subscript` | Subscript |
+| `eraser` | Clear formatting |
+
+### Alignment
+
+| Name | Description |
+|---|---|
+| `left` | Align left |
+| `center` | Align centre |
+| `right` | Align right |
+| `justify` | Justify |
+
+### Lists & Indentation
+
+| Name | Description |
+|---|---|
+| `ul` | Unordered list |
+| `ol` | Ordered list |
+| `indent` | Increase indent |
+| `outdent` | Decrease indent |
+
+### Block / Typography
+
+| Name | Description |
+|---|---|
+| `paragraph` | Paragraph / Headings (H1–H6) |
+| `font` | Font family |
+| `fontsize` | Font size |
+| `brush` | Text colour & background colour |
+| `classSpan` | Apply CSS class to selection |
+
+### Insert
+
+| Name | Description |
+|---|---|
+| `link` | Insert / edit hyperlink |
+| `image` | Insert image |
+| `video` | Insert video (embed) |
+| `file` | Insert file link |
+| `table` | Insert table |
+| `hr` | Horizontal rule |
+| `symbols` | Special characters |
+
+### Clipboard & History
+
+| Name | Description |
+|---|---|
+| `undo` | Undo |
+| `redo` | Redo |
+| `cut` | Cut |
+| `copy` | Copy |
+| `paste` | Paste |
+| `selectall` | Select all |
+
+### View / Utility
+
+| Name | Description |
+|---|---|
+| `source` | Toggle HTML source view |
+| `fullsize` | Toggle fullscreen |
+| `preview` | Live preview |
+| `print` | Print |
+| `find` | Find & replace |
+| `spellcheck` | Spell check |
+| `speech` | Speech recognition |
+
+### Separators
+
+| Name | Description |
+|---|---|
+| `\|` | Vertical separator bar |
+| `\n` | Line break (start a new toolbar row) |
+
+**Example — compact toolbar:**
+
+```php
+'buttons' => [
+    'bold', 'italic', 'underline', 'strikethrough', 'eraser', '|',
+    'ul', 'ol', '|',
+    'paragraph', 'brush', '|',
+    'link', 'image', '|',
+    'undo', 'redo',
+],
+```
+
+---
+
+## File Manager Backends
+
+The `file_manager.backend` config key controls which file manager is wired up when `file-browser="true"` (the default).
+
+### `builtin` (default)
+
+Uses the package's own connector controller. No extra packages required.
+
+```php
+// config/jodit.php
+'file_manager' => [
+    'backend' => 'builtin',
+],
+```
+
+### `unisharp` — UniSharp Laravel FileManager
+
+Requires [`unisharp/laravel-filemanager`](https://github.com/UniSharp/laravel-filemanager) to be installed and its routes published.
+
+```bash
+composer require unisharp/laravel-filemanager
+php artisan vendor:publish --tag=lfm_public
+```
+
+```php
+// config/jodit.php
+'file_manager' => [
+    'backend' => 'unisharp',
+
+    'unisharp' => [
+        'browse_url'  => '/laravel-filemanager',
+        'upload_url'  => '/laravel-filemanager/upload',
+        'type'        => 'Images',   // 'Images' | 'Files'
+        'window_size' => '900x600',
+    ],
+],
+```
+
+When this backend is active, a **File Manager** toolbar button replaces Jodit's native file browser. Clicking it opens the LFM popup; selecting a file inserts it into the editor automatically.
+
+### `custom`
+
+Point the editor at any server-side connector that speaks Jodit's filebrowser protocol. Pass the URL via the component's `connector-url` prop, or set `route.name` in the config:
+
+```blade
+<x-jodit::editor
+    name="content"
+    connector-url="{{ route('my.connector') }}"
+/>
 ```
 
 ---

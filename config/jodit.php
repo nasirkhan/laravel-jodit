@@ -107,4 +107,38 @@ return [
         'undo', 'redo',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | File Manager Backend
+    |--------------------------------------------------------------------------
+    |
+    | Controls which file manager is used when the editor's file browser is
+    | enabled (file-browser="true", the default).
+    |
+    | 'backend' options:
+    |   - 'builtin'   — the package's own connector controller (default)
+    |   - 'unisharp'  — UniSharp Laravel FileManager (unisharp/laravel-filemanager)
+    |   - 'custom'    — any connector that speaks Jodit's filebrowser protocol;
+    |                   supply the URL via the connector-url component prop.
+    |
+    */
+
+    'file_manager' => [
+
+        'backend' => 'builtin',
+
+        /*
+         * Settings used when backend = 'unisharp'.
+         * Requires: unisharp/laravel-filemanager is installed and its routes are
+         * published (php artisan vendor:publish --tag=lfm_public).
+         */
+        'unisharp' => [
+            'browse_url'  => '/laravel-filemanager',         // LFM popup URL
+            'upload_url'  => '/laravel-filemanager/upload',  // LFM upload endpoint
+            'type'        => 'Images',                       // 'Images' or 'Files'
+            'window_size' => '900x600',                      // popup width x height
+        ],
+
+    ],
+
 ];

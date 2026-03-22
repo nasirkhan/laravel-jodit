@@ -46,7 +46,7 @@ return [
         'enabled' => true,
         'prefix' => 'jodit',
         'name' => 'jodit.connector',
-        'middleware' => ['web', 'auth'],
+        'middleware' => ['web', 'auth', 'throttle:60,1'],
     ],
 
     /*

@@ -100,10 +100,11 @@ return [
     'defaults' => [
         'height' => 400,
         'toolbarSticky' => true,
-        'toolbarButtonSize' => 'large',
-        'showCharsCounter' => false,
-        'showWordsCounter' => false,
-        'showXPathInStatusbar' => false,
+        'toolbarButtonSize' => 'middle',
+        'showCharsCounter' => true,
+        'showWordsCounter' => true,
+        'showXPathInStatusbar' => true,
+        'hidePoweredByJodit' => true,
         'defaultActionOnPaste' => 'insert_clear_html',
     ],
 
@@ -120,25 +121,29 @@ return [
     |
     */
 
-    'default_profile' => null,
+    'default_profile' => 'full',
 
     'profiles' => [
         'full' => [
-            'bold', 'italic', 'underline', 'strikethrough', '|',
-            'left', 'center', 'right', '|',
-            'ul', 'ol', '|',
-            'font', 'fontsize', 'paragraph', 'brush', '|',
-            'link', 'image', 'video', 'file', '|',
-            'undo', 'redo',
+            'undo', 'redo', '|',
+            'bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript', 'eraser', '|',
+            'paragraph', 'font', 'fontsize', 'brush', 'classSpan', '|',
+            'align', 'ul', 'ol', 'indent', 'outdent', '|',
+            'cut', 'copy', 'paste', 'selectall', '|',
+            'link', 'image', 'video', 'file', 'table', 'hr', 'symbols', '|',
+            'source', '|',
+            'find', 'spellcheck', 'preview', 'fullsize',
         ],
         'simple' => [
-            'bold', 'italic', 'underline', '|',
-            'ul', 'ol', '|',
-            'link', 'image', '|',
+            'bold', 'italic', 'eraser', '|',
+            'paragraph', 'align', 'ul', 'ol', '|',
+            'link', 'image', 'table', 'hr', '|',
+            'source', '|',
             'undo', 'redo',
         ],
         'minimal' => [
-            'bold', 'italic', '|',
+            'bold', 'italic', 'eraser', '|',
+            'source', '|',
             'link',
         ],
     ],

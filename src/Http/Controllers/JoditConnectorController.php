@@ -42,13 +42,13 @@ class JoditConnectorController extends Controller
         return match ($action) {
             'files' => $this->actionFiles($request),
             'folders' => $this->actionFolders($request),
-            'upload' => $this->actionUpload($request),
-            'remove' => $this->actionRemove($request),
-            'rename' => $this->actionRename($request),
-            'create' => $this->actionCreate($request),
-            'move' => $this->actionMove($request),
-            'resize' => $this->actionResize($request),
-            'crop' => $this->actionCrop($request),
+            'upload', 'fileUpload' => $this->actionUpload($request),
+            'remove', 'fileRemove', 'folderRemove' => $this->actionRemove($request),
+            'rename', 'fileRename', 'folderRename' => $this->actionRename($request),
+            'create', 'folderCreate' => $this->actionCreate($request),
+            'move', 'fileMove', 'folderMove' => $this->actionMove($request),
+            'resize', 'imageResize' => $this->actionResize($request),
+            'crop', 'imageCrop' => $this->actionCrop($request),
             default => $this->sourceResponse($this->resolvedPath($request), [], []),
         };
     }
@@ -215,14 +215,18 @@ class JoditConnectorController extends Controller
 
         $target = $path.'/'.$name;
 
-        if (Storage::disk($this->disk)->exists($target)) {
-            Storage::disk($this->disk)->delete($target);
+        if (Storage::disk($this->disk)->directoryExists($target)) {
+            if (! Storage::disk($this->disk)->deleteDirectory($target)) {
+                return $this->error('Could not delete the folder.');
+            }
 
             return response()->json(['success' => true]);
         }
 
-        if (Storage::disk($this->disk)->directoryExists($target)) {
-            Storage::disk($this->disk)->deleteDirectory($target);
+        if (Storage::disk($this->disk)->exists($target)) {
+            if (! Storage::disk($this->disk)->delete($target)) {
+                return $this->error('Could not delete the file.');
+            }
 
             return response()->json(['success' => true]);
         }

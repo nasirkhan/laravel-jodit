@@ -13,7 +13,7 @@ return [
     */
 
     'cdn_css' => 'https://unpkg.com/jodit@4.1.16/es2021/jodit.min.css',
-    'cdn_js'  => 'https://unpkg.com/jodit@4.1.16/es2021/jodit.min.js',
+    'cdn_js' => 'https://unpkg.com/jodit@4.1.16/es2021/jodit.min.js',
 
     /*
     |--------------------------------------------------------------------------
@@ -27,7 +27,7 @@ return [
     */
 
     'assets' => [
-        'styles_stack'  => 'after-styles',
+        'styles_stack' => 'after-styles',
         'scripts_stack' => 'after-scripts',
     ],
 
@@ -43,9 +43,9 @@ return [
     */
 
     'route' => [
-        'enabled'    => true,
-        'prefix'     => 'jodit',
-        'name'       => 'jodit.connector',
+        'enabled' => true,
+        'prefix' => 'jodit',
+        'name' => 'jodit.connector',
         'middleware' => ['web', 'auth'],
     ],
 
@@ -59,8 +59,9 @@ return [
     |
     */
 
-    'disk'      => 'public',
-    'base_path' => 'jodit',
+    'disk' => 'public',
+    'base_path' => 'uploads',
+    'user_directory' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -70,6 +71,20 @@ return [
 
     'max_file_size' => 10240,  // kilobytes
     'allowed_mimes' => 'jpeg,jpg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,zip,txt',
+    'preserve_file_names' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Editor Language
+    |--------------------------------------------------------------------------
+    |
+    | UI language for the Jodit toolbar and dialogs. Set to null to let the
+    | browser decide (Jodit auto-detects from navigator.language).
+    | Examples: 'en', 'de', 'fr', 'ar', 'zh_cn'.
+    |
+    */
+
+    'language' => null,
 
     /*
     |--------------------------------------------------------------------------
@@ -83,62 +98,49 @@ return [
     */
 
     'defaults' => [
-        'height'               => 400,
-        'toolbarSticky'        => true,
-        'toolbarButtonSize'    => 'large',
-        'showCharsCounter'     => false,
-        'showWordsCounter'     => false,
+        'height' => 400,
+        'toolbarSticky' => true,
+        'toolbarButtonSize' => 'large',
+        'showCharsCounter' => false,
+        'showWordsCounter' => false,
         'showXPathInStatusbar' => false,
         'defaultActionOnPaste' => 'insert_clear_html',
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Default Toolbar Buttons
-    |--------------------------------------------------------------------------
-    */
-
-    'buttons' => [
-        'bold', 'italic', 'underline', 'strikethrough', '|',
-        'left', 'center', 'right', '|',
-        'ul', 'ol', '|',
-        'font', 'fontsize', 'paragraph', 'brush', '|',
-        'link', 'image', 'video', 'file', '|',
-        'undo', 'redo',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | File Manager Backend
+    | Toolbar Profiles
     |--------------------------------------------------------------------------
     |
-    | Controls which file manager is used when the editor's file browser is
-    | enabled (file-browser="true", the default).
+    | Named button sets. Select a profile per-instance with the `profile` prop:
+    |   <x-jodit::editor name="body" profile="simple" />
     |
-    | 'backend' options:
-    |   - 'builtin'   — the package's own connector controller (default)
-    |   - 'unisharp'  — UniSharp Laravel FileManager (unisharp/laravel-filemanager)
-    |   - 'custom'    — any connector that speaks Jodit's filebrowser protocol;
-    |                   supply the URL via the connector-url component prop.
+    | `default_profile` is used when no `buttons` or `profile` prop is given.
+    | Set to null to fall back to the `buttons` array defined above.
     |
     */
 
-    'file_manager' => [
+    'default_profile' => null,
 
-        'backend' => 'builtin',
-
-        /*
-         * Settings used when backend = 'unisharp'.
-         * Requires: unisharp/laravel-filemanager is installed and its routes are
-         * published (php artisan vendor:publish --tag=lfm_public).
-         */
-        'unisharp' => [
-            'browse_url'  => '/laravel-filemanager',         // LFM popup URL
-            'upload_url'  => '/laravel-filemanager/upload',  // LFM upload endpoint
-            'type'        => 'Images',                       // 'Images' or 'Files'
-            'window_size' => '900x600',                      // popup width x height
+    'profiles' => [
+        'full' => [
+            'bold', 'italic', 'underline', 'strikethrough', '|',
+            'left', 'center', 'right', '|',
+            'ul', 'ol', '|',
+            'font', 'fontsize', 'paragraph', 'brush', '|',
+            'link', 'image', 'video', 'file', '|',
+            'undo', 'redo',
         ],
-
+        'simple' => [
+            'bold', 'italic', 'underline', '|',
+            'ul', 'ol', '|',
+            'link', 'image', '|',
+            'undo', 'redo',
+        ],
+        'minimal' => [
+            'bold', 'italic', '|',
+            'link',
+        ],
     ],
 
 ];

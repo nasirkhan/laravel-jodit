@@ -19,7 +19,7 @@ This package is used in [Laravel Starter](https://github.com/nasirkhan/laravel-s
 ## Requirements
 
 - PHP 8.2+
-- Laravel 11 or 12
+- Laravel 11/ 12/ 13
 - `intervention/image-laravel ^1.5` — only required for image **resize** and **crop** features
 
 ---

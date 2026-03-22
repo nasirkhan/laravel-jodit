@@ -35,6 +35,8 @@ class JoditConnectorController extends Controller
 
     public function handle(Request $request): JsonResponse
     {
+        $this->resolveInstanceConfig($request);
+
         $action = (string) ($request->input('action') ?: 'files');
 
         return match ($action) {
@@ -52,6 +54,39 @@ class JoditConnectorController extends Controller
     }
 
     // ---------------------------------------------------------------
+    // Instance configuration resolver
+    // ---------------------------------------------------------------
+
+    /**
+     * Override disk and base path for this request when the caller passes
+     * per-instance values. The disk is validated against the application's
+     * configured filesystems to prevent arbitrary access.
+     */
+    protected function resolveInstanceConfig(Request $request): void
+    {
+        // Per-instance disk — must be one of the configured filesystems
+        $requestedDisk = (string) $request->input('disk', '');
+        $allowedDisks = array_keys(config('filesystems.disks', []));
+
+        if ($requestedDisk !== '' && in_array($requestedDisk, $allowedDisks, true)) {
+            $this->disk = $requestedDisk;
+        }
+
+        // Per-instance directory override
+        $requestedDir = ltrim((string) $request->input('directory', ''), '/');
+        $requestedDir = str_replace(['../', '..'.DIRECTORY_SEPARATOR, '..'], '', $requestedDir);
+
+        if ($requestedDir !== '') {
+            $this->basePath = trim($requestedDir, '/');
+        }
+
+        // Per-user directory scoping
+        if (config('jodit.user_directory', false) && auth()->check()) {
+            $this->basePath = trim($this->basePath.'/users/'.auth()->id(), '/');
+        }
+    }
+
+    // ---------------------------------------------------------------
     // Actions
     // ---------------------------------------------------------------
 
@@ -59,18 +94,26 @@ class JoditConnectorController extends Controller
     {
         $path = $this->resolvedPath($request);
         $type = (string) $request->input('type', 'all');
+        $search = (string) $request->input('search', '');
+        $sortBy = (string) $request->input('sortBy', 'name');
+        $order = strtolower((string) $request->input('order', 'asc')) === 'desc' ? 'desc' : 'asc';
+
         $this->ensureDirectory($path);
 
         $files = collect(Storage::disk($this->disk)->files($path))
             ->map(function (string $file): array {
                 $name = basename($file);
                 $isImage = $this->isImage($name);
+                $bytes = Storage::disk($this->disk)->size($file);
+                $modified = Storage::disk($this->disk)->lastModified($file);
 
                 return [
                     'file' => $name,
                     'thumb' => $isImage ? $name : null,
-                    'changed' => date('m/d/Y g:i A', Storage::disk($this->disk)->lastModified($file)),
-                    'size' => $this->formatBytes(Storage::disk($this->disk)->size($file)),
+                    'changed' => date('m/d/Y g:i A', $modified),
+                    'changed_ts' => $modified,
+                    'size' => $this->formatBytes($bytes),
+                    'size_bytes' => $bytes,
                     'isImage' => $isImage,
                 ];
             })
@@ -85,6 +128,17 @@ class JoditConnectorController extends Controller
 
                 return true;
             })
+            ->when($search !== '', fn ($c) => $c->filter(
+                fn ($item) => str_contains(mb_strtolower($item['file']), mb_strtolower($search))
+            ))
+            ->sortBy(function (array $item) use ($sortBy): mixed {
+                return match ($sortBy) {
+                    'size' => $item['size_bytes'],
+                    'changed' => $item['changed_ts'],
+                    default => mb_strtolower($item['file']),
+                };
+            }, SORT_REGULAR, $order === 'desc')
+            ->map(fn ($item) => array_diff_key($item, array_flip(['size_bytes', 'changed_ts'])))
             ->values()
             ->all();
 
@@ -121,7 +175,19 @@ class JoditConnectorController extends Controller
         $isImages = [];
 
         foreach ($request->file('files') as $file) {
-            $name = $file->hashName();
+            if (config('jodit.preserve_file_names', false)) {
+                $ext = $file->getClientOriginalExtension();
+                $base = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $name = Str::slug($base).'.'.$ext;
+                $counter = 0;
+                while (Storage::disk($this->disk)->exists($path.'/'.$name)) {
+                    $counter++;
+                    $name = Str::slug($base).'-'.$counter.'.'.$ext;
+                }
+            } else {
+                $name = $file->hashName();
+            }
+
             $file->storeAs($path, $name, $this->disk);
             $uploaded[] = '/storage/'.$path.'/'.$name;
             $isImages[] = $this->isImage($name);

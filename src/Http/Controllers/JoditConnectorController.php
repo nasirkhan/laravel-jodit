@@ -77,7 +77,11 @@ class JoditConnectorController extends Controller
         $requestedDir = str_replace(['../', '..'.DIRECTORY_SEPARATOR, '..'], '', $requestedDir);
 
         if ($requestedDir !== '') {
-            $this->basePath = trim($requestedDir, '/');
+            $configuredBase = config('jodit.base_path', 'jodit');
+
+            // Resolve as a sub-directory under base_path to prevent path-traversal
+            // out of the configured storage root.
+            $this->basePath = trim($configuredBase.'/'.$requestedDir, '/');
         }
 
         // Per-user directory scoping
@@ -161,7 +165,7 @@ class JoditConnectorController extends Controller
     protected function actionUpload(Request $request): JsonResponse
     {
         $maxSize = (int) config('jodit.max_file_size', 10240);
-        $allowedMimes = config('jodit.allowed_mimes', 'jpeg,jpg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,zip,txt');
+        $allowedMimes = config('jodit.allowed_mimes', 'jpeg,jpg,png,gif,webp,pdf,doc,docx,xls,xlsx,zip,txt');
 
         $request->validate([
             'files' => 'required',
@@ -195,7 +199,11 @@ class JoditConnectorController extends Controller
                 $name = $file->hashName();
             }
 
-            $file->storeAs($path, $name, $this->disk);
+            $stored = $file->storeAs($path, $name, $this->disk);
+
+            if ($stored === false) {
+                return $this->error('Failed to store the uploaded file.');
+            }
 
             $storedPath = $path.'/'.$name;
             if ($this->isImage($name) && ! str_ends_with(strtolower($name), '.svg')) {
@@ -260,11 +268,13 @@ class JoditConnectorController extends Controller
         $oldPath = $path.'/'.$name;
         $newPath = $path.'/'.$newName;
 
-        if (! Storage::disk($this->disk)->exists($oldPath)) {
+        if (! Storage::disk($this->disk)->exists($oldPath) && ! Storage::disk($this->disk)->directoryExists($oldPath)) {
             return $this->error('File not found.');
         }
 
-        Storage::disk($this->disk)->move($oldPath, $newPath);
+        if (! Storage::disk($this->disk)->move($oldPath, $newPath)) {
+            return $this->error('Could not rename the file or folder.');
+        }
 
         return response()->json(['success' => true, 'data' => []]);
     }
@@ -278,7 +288,9 @@ class JoditConnectorController extends Controller
             return $this->error('Folder name is required.');
         }
 
-        Storage::disk($this->disk)->makeDirectory($path.'/'.$name);
+        if (! Storage::disk($this->disk)->makeDirectory($path.'/'.$name)) {
+            return $this->error('Could not create the folder.');
+        }
 
         return response()->json(['success' => true, 'data' => []]);
     }
@@ -299,11 +311,13 @@ class JoditConnectorController extends Controller
         $oldPath = $path.'/'.$name;
         $newPath = $newBasePath.'/'.$name;
 
-        if (! Storage::disk($this->disk)->exists($oldPath)) {
+        if (! Storage::disk($this->disk)->exists($oldPath) && ! Storage::disk($this->disk)->directoryExists($oldPath)) {
             return $this->error('File not found.');
         }
 
-        Storage::disk($this->disk)->move($oldPath, $newPath);
+        if (! Storage::disk($this->disk)->move($oldPath, $newPath)) {
+            return $this->error('Could not move the file or folder.');
+        }
 
         return response()->json(['success' => true, 'data' => []]);
     }
@@ -330,7 +344,12 @@ class JoditConnectorController extends Controller
         }
 
         $absolutePath = Storage::disk($this->disk)->path($filePath);
-        $image = Image::read($absolutePath);
+
+        try {
+            $image = Image::read($absolutePath);
+        } catch (\Throwable) {
+            return $this->error('Could not read image file.');
+        }
 
         if ($width && $height) {
             $image->scale(width: $width, height: $height);
@@ -368,9 +387,19 @@ class JoditConnectorController extends Controller
             return $this->error('File not found.');
         }
 
+        if ($width <= 0 || $height <= 0) {
+            return $this->error('Width and height are required for crop.');
+        }
+
         $absolutePath = Storage::disk($this->disk)->path($filePath);
-        $image = Image::read($absolutePath);
-        $image->crop($width ?: 100, $height ?: 100, $x, $y);
+
+        try {
+            $image = Image::read($absolutePath);
+        } catch (\Throwable) {
+            return $this->error('Could not read image file.');
+        }
+
+        $image->crop($width, $height, $x, $y);
         $image->save($absolutePath);
 
         return response()->json(['success' => true, 'data' => []]);
@@ -394,7 +423,7 @@ class JoditConnectorController extends Controller
 
     protected function ensureDirectory(string $path): void
     {
-        if (! Storage::disk($this->disk)->exists($path)) {
+        if (! Storage::disk($this->disk)->directoryExists($path)) {
             Storage::disk($this->disk)->makeDirectory($path);
         }
     }
@@ -432,33 +461,33 @@ class JoditConnectorController extends Controller
     protected function getAllowedMimeTypes(string $extensions): array
     {
         $map = [
-            'jpg'  => 'image/jpeg',
+            'jpg' => 'image/jpeg',
             'jpeg' => 'image/jpeg',
-            'png'  => 'image/png',
-            'gif'  => 'image/gif',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
             'webp' => 'image/webp',
-            'bmp'  => 'image/bmp',
-            'tif'  => 'image/tiff',
+            'bmp' => 'image/bmp',
+            'tif' => 'image/tiff',
             'tiff' => 'image/tiff',
-            'ico'  => 'image/x-icon',
-            'svg'  => 'image/svg+xml',
-            'pdf'  => 'application/pdf',
-            'doc'  => 'application/msword',
+            'ico' => 'image/x-icon',
+            'svg' => 'image/svg+xml',
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
             'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'xls'  => 'application/vnd.ms-excel',
+            'xls' => 'application/vnd.ms-excel',
             'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'ppt'  => 'application/vnd.ms-powerpoint',
+            'ppt' => 'application/vnd.ms-powerpoint',
             'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'zip'  => 'application/zip',
-            'gz'   => 'application/gzip',
-            'rar'  => 'application/x-rar-compressed',
-            '7z'   => 'application/x-7z-compressed',
-            'txt'  => 'text/plain',
-            'csv'  => 'text/csv',
+            'zip' => 'application/zip',
+            'gz' => 'application/gzip',
+            'rar' => 'application/x-rar-compressed',
+            '7z' => 'application/x-7z-compressed',
+            'txt' => 'text/plain',
+            'csv' => 'text/csv',
             'json' => 'application/json',
-            'xml'  => 'application/xml',
-            'mp3'  => 'audio/mpeg',
-            'mp4'  => 'video/mp4',
+            'xml' => 'application/xml',
+            'mp3' => 'audio/mpeg',
+            'mp4' => 'video/mp4',
         ];
 
         $mimeTypes = [];

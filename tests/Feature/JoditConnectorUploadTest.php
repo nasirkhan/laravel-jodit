@@ -227,6 +227,6 @@ class JoditConnectorUploadTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertNotEmpty(Storage::disk('public')->allFiles('custom-dir'));
+        $this->assertNotEmpty(Storage::disk('public')->allFiles('uploads/custom-dir'));
     }
 }

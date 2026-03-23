@@ -171,10 +171,17 @@ class JoditConnectorController extends Controller
         $path = $this->resolvedPath($request);
         $this->ensureDirectory($path);
 
+        $allowedMimeTypes = $this->getAllowedMimeTypes($allowedMimes);
         $uploaded = [];
         $isImages = [];
 
         foreach ($request->file('files') as $file) {
+            // Secondary MIME verification using finfo to prevent extension spoofing
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $detectedMime = $finfo->file($file->getPathname());
+            if ($allowedMimeTypes !== [] && ! in_array($detectedMime, $allowedMimeTypes, true)) {
+                return $this->error('Invalid file type detected.');
+            }
             if (config('jodit.preserve_file_names', false)) {
                 $ext = $file->getClientOriginalExtension();
                 $base = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -409,6 +416,54 @@ class JoditConnectorController extends Controller
                 ],
             ],
         ]);
+    }
+
+    /**
+     * Map a comma-separated list of file extensions to their canonical MIME types.
+     *
+     * @return array<string>
+     */
+    protected function getAllowedMimeTypes(string $extensions): array
+    {
+        $map = [
+            'jpg'  => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png'  => 'image/png',
+            'gif'  => 'image/gif',
+            'webp' => 'image/webp',
+            'bmp'  => 'image/bmp',
+            'tif'  => 'image/tiff',
+            'tiff' => 'image/tiff',
+            'ico'  => 'image/x-icon',
+            'svg'  => 'image/svg+xml',
+            'pdf'  => 'application/pdf',
+            'doc'  => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls'  => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'ppt'  => 'application/vnd.ms-powerpoint',
+            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'zip'  => 'application/zip',
+            'gz'   => 'application/gzip',
+            'rar'  => 'application/x-rar-compressed',
+            '7z'   => 'application/x-7z-compressed',
+            'txt'  => 'text/plain',
+            'csv'  => 'text/csv',
+            'json' => 'application/json',
+            'xml'  => 'application/xml',
+            'mp3'  => 'audio/mpeg',
+            'mp4'  => 'video/mp4',
+        ];
+
+        $mimeTypes = [];
+        foreach (explode(',', $extensions) as $ext) {
+            $ext = trim(strtolower($ext));
+            if (isset($map[$ext])) {
+                $mimeTypes[] = $map[$ext];
+            }
+        }
+
+        return array_unique($mimeTypes);
     }
 
     protected function isImage(string $filename): bool

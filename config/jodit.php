@@ -46,7 +46,7 @@ return [
         'enabled' => true,
         'prefix' => 'jodit',
         'name' => 'jodit.connector',
-        'middleware' => ['web', 'auth'],
+        'middleware' => ['web', 'auth', 'throttle:60,1'],
     ],
 
     /*
@@ -70,7 +70,7 @@ return [
     */
 
     'max_file_size' => 10240,  // kilobytes
-    'allowed_mimes' => 'jpeg,jpg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,zip,txt',
+    'allowed_mimes' => 'jpeg,jpg,png,gif,webp,pdf,doc,docx,xls,xlsx,zip,txt',
     'preserve_file_names' => false,
 
     /*

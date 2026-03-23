@@ -64,6 +64,7 @@
     var LANGUAGE         = @json($resolvedLanguage);
     var INSTANCE_DISK    = @json($resolvedDisk);
     var INSTANCE_DIR     = @json($resolvedDirectory);
+    var MAX_FILE_SIZE_KB = @json(config('jodit.max_file_size', 10240));
 
     // Returns extra data fields to scope requests to this editor instance.
     function instanceData() {
@@ -93,6 +94,12 @@
                     url:     CONNECTOR + '?action=upload',
                     headers: { 'X-CSRF-TOKEN': csrfToken },
                     data:    instanceData(),
+                    validate: function (file) {
+                        if (file.size > MAX_FILE_SIZE_KB * 1024) {
+                            return 'File is too large. Maximum allowed size is ' + MAX_FILE_SIZE_KB + ' KB.';
+                        }
+                        return true;
+                    },
                     isSuccess: function (r) { return !!r.success; },
                     getMessage: function (r) { return r.message || ''; },
                     process: function (r) {
@@ -119,6 +126,12 @@
                         url:     CONNECTOR + '?action=upload',
                         headers: { 'X-CSRF-TOKEN': csrfToken },
                         data:    instanceData(),
+                        validate: function (file) {
+                            if (file.size > MAX_FILE_SIZE_KB * 1024) {
+                                return 'File is too large. Maximum allowed size is ' + MAX_FILE_SIZE_KB + ' KB.';
+                            }
+                            return true;
+                        },
                     },
                 };
             }

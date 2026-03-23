@@ -196,6 +196,12 @@ class JoditConnectorController extends Controller
             }
 
             $file->storeAs($path, $name, $this->disk);
+
+            $storedPath = $path.'/'.$name;
+            if ($this->isImage($name) && ! str_ends_with(strtolower($name), '.svg')) {
+                $this->sanitizeImage(Storage::disk($this->disk)->path($storedPath));
+            }
+
             $uploaded[] = '/storage/'.$path.'/'.$name;
             $isImages[] = $this->isImage($name);
         }
@@ -464,6 +470,25 @@ class JoditConnectorController extends Controller
         }
 
         return array_unique($mimeTypes);
+    }
+
+    /**
+     * Strip EXIF metadata and fix orientation for raster images.
+     * Silently skipped when intervention/image-laravel is not installed.
+     */
+    protected function sanitizeImage(string $absolutePath): void
+    {
+        if (! class_exists(Image::class)) {
+            return;
+        }
+
+        try {
+            $image = Image::read($absolutePath);
+            $image->orient();
+            $image->save($absolutePath);
+        } catch (\Throwable) {
+            // Non-fatal — leave the original file intact if sanitization fails.
+        }
     }
 
     protected function isImage(string $filename): bool

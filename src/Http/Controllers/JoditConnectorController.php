@@ -315,6 +315,8 @@ class JoditConnectorController extends Controller
             return $this->error('File not found.');
         }
 
+        $this->ensureDirectory($newBasePath);
+
         if (! Storage::disk($this->disk)->move($oldPath, $newPath)) {
             return $this->error('Could not move the file or folder.');
         }

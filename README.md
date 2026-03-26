@@ -22,15 +22,11 @@ Tags: `laravel`, `jodit`, `wysiwyg`, `editor`, `blade`, `livewire`, `rich-text`,
 - **Fully configurable** — publish the config to override defaults, CDN URLs, middleware, etc.
 - **Flexible toolbar buttons** — supports named profiles, custom button arrays, separators, and dropdown-friendly controls like `align`
 
----
-
 ## Requirements
 
-- PHP 8.2+
-- Laravel 11/ 12/ 13
+- PHP ^8.2
+- Laravel ^11.0 || ^12.0 || ^13.0
 - `intervention/image-laravel ^1.5` — only required for image **resize** and **crop** features
-
----
 
 ## Installation
 

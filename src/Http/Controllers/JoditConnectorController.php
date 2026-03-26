@@ -40,7 +40,7 @@ class JoditConnectorController extends Controller
         $action = (string) ($request->input('action') ?: 'files');
 
         return match ($action) {
-            'files' => $this->actionFiles($request),
+            'files'   => $this->actionFiles($request),
             'folders' => $this->actionFolders($request),
             'upload', 'fileUpload' => $this->actionUpload($request),
             'remove', 'fileRemove', 'folderRemove' => $this->actionRemove($request),
@@ -112,13 +112,13 @@ class JoditConnectorController extends Controller
                 $modified = Storage::disk($this->disk)->lastModified($file);
 
                 return [
-                    'file' => $name,
-                    'thumb' => $isImage ? $name : null,
-                    'changed' => date('m/d/Y g:i A', $modified),
+                    'file'       => $name,
+                    'thumb'      => $isImage ? $name : null,
+                    'changed'    => date('m/d/Y g:i A', $modified),
                     'changed_ts' => $modified,
-                    'size' => $this->formatBytes($bytes),
+                    'size'       => $this->formatBytes($bytes),
                     'size_bytes' => $bytes,
-                    'isImage' => $isImage,
+                    'isImage'    => $isImage,
                 ];
             })
             ->filter(function (array $item) use ($type): bool {
@@ -127,7 +127,7 @@ class JoditConnectorController extends Controller
                 }
 
                 if ($type === 'files') {
-                    return ! $item['isImage'];
+                    return !$item['isImage'];
                 }
 
                 return true;
@@ -137,9 +137,9 @@ class JoditConnectorController extends Controller
             ))
             ->sortBy(function (array $item) use ($sortBy): mixed {
                 return match ($sortBy) {
-                    'size' => $item['size_bytes'],
+                    'size'    => $item['size_bytes'],
                     'changed' => $item['changed_ts'],
-                    default => mb_strtolower($item['file']),
+                    default   => mb_strtolower($item['file']),
                 };
             }, SORT_REGULAR, $order === 'desc')
             ->map(fn ($item) => array_diff_key($item, array_flip(['size_bytes', 'changed_ts'])))
@@ -168,7 +168,7 @@ class JoditConnectorController extends Controller
         $allowedMimes = config('jodit.allowed_mimes', 'jpeg,jpg,png,gif,webp,pdf,doc,docx,xls,xlsx,zip,txt');
 
         $request->validate([
-            'files' => 'required',
+            'files'   => 'required',
             'files.*' => "file|max:{$maxSize}|mimes:{$allowedMimes}",
         ]);
 
@@ -183,7 +183,7 @@ class JoditConnectorController extends Controller
             // Secondary MIME verification using finfo to prevent extension spoofing
             $finfo = new \finfo(FILEINFO_MIME_TYPE);
             $detectedMime = $finfo->file($file->getPathname());
-            if ($allowedMimeTypes !== [] && ! in_array($detectedMime, $allowedMimeTypes, true)) {
+            if ($allowedMimeTypes !== [] && !in_array($detectedMime, $allowedMimeTypes, true)) {
                 return $this->error('Invalid file type detected.');
             }
             if (config('jodit.preserve_file_names', false)) {
@@ -206,7 +206,7 @@ class JoditConnectorController extends Controller
             }
 
             $storedPath = $path.'/'.$name;
-            if ($this->isImage($name) && ! str_ends_with(strtolower($name), '.svg')) {
+            if ($this->isImage($name) && !str_ends_with(strtolower($name), '.svg')) {
                 $this->sanitizeImage(Storage::disk($this->disk)->path($storedPath));
             }
 
@@ -216,11 +216,11 @@ class JoditConnectorController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'baseurl' => '',
+            'data'    => [
+                'baseurl'     => '',
                 'newfilename' => basename($uploaded[0] ?? ''),
-                'files' => $uploaded,
-                'isImages' => $isImages,
+                'files'       => $uploaded,
+                'isImages'    => $isImages,
             ],
         ]);
     }
@@ -230,14 +230,14 @@ class JoditConnectorController extends Controller
         $path = $this->resolvedPath($request);
         $name = basename((string) $request->input('name', ''));
 
-        if (! $name) {
+        if (!$name) {
             return $this->error('Name is required.');
         }
 
         $target = $path.'/'.$name;
 
         if (Storage::disk($this->disk)->directoryExists($target)) {
-            if (! Storage::disk($this->disk)->deleteDirectory($target)) {
+            if (!Storage::disk($this->disk)->deleteDirectory($target)) {
                 return $this->error('Could not delete the folder.');
             }
 
@@ -245,7 +245,7 @@ class JoditConnectorController extends Controller
         }
 
         if (Storage::disk($this->disk)->exists($target)) {
-            if (! Storage::disk($this->disk)->delete($target)) {
+            if (!Storage::disk($this->disk)->delete($target)) {
                 return $this->error('Could not delete the file.');
             }
 
@@ -261,18 +261,18 @@ class JoditConnectorController extends Controller
         $name = basename((string) $request->input('name', ''));
         $newName = basename((string) $request->input('newname', ''));
 
-        if (! $name || ! $newName) {
+        if (!$name || !$newName) {
             return $this->error('Both name and newname are required.');
         }
 
         $oldPath = $path.'/'.$name;
         $newPath = $path.'/'.$newName;
 
-        if (! Storage::disk($this->disk)->exists($oldPath) && ! Storage::disk($this->disk)->directoryExists($oldPath)) {
+        if (!Storage::disk($this->disk)->exists($oldPath) && !Storage::disk($this->disk)->directoryExists($oldPath)) {
             return $this->error('File not found.');
         }
 
-        if (! Storage::disk($this->disk)->move($oldPath, $newPath)) {
+        if (!Storage::disk($this->disk)->move($oldPath, $newPath)) {
             return $this->error('Could not rename the file or folder.');
         }
 
@@ -284,11 +284,11 @@ class JoditConnectorController extends Controller
         $path = $this->resolvedPath($request);
         $name = Str::slug((string) $request->input('name', ''));
 
-        if (! $name) {
+        if (!$name) {
             return $this->error('Folder name is required.');
         }
 
-        if (! Storage::disk($this->disk)->makeDirectory($path.'/'.$name)) {
+        if (!Storage::disk($this->disk)->makeDirectory($path.'/'.$name)) {
             return $this->error('Could not create the folder.');
         }
 
@@ -304,20 +304,20 @@ class JoditConnectorController extends Controller
         $rawNewPath = str_replace(['../', '..'.DIRECTORY_SEPARATOR, '..'], '', $rawNewPath);
         $newBasePath = trim($this->basePath.'/'.$rawNewPath, '/');
 
-        if (! $name) {
+        if (!$name) {
             return $this->error('Name is required.');
         }
 
         $oldPath = $path.'/'.$name;
         $newPath = $newBasePath.'/'.$name;
 
-        if (! Storage::disk($this->disk)->exists($oldPath) && ! Storage::disk($this->disk)->directoryExists($oldPath)) {
+        if (!Storage::disk($this->disk)->exists($oldPath) && !Storage::disk($this->disk)->directoryExists($oldPath)) {
             return $this->error('File not found.');
         }
 
         $this->ensureDirectory($newBasePath);
 
-        if (! Storage::disk($this->disk)->move($oldPath, $newPath)) {
+        if (!Storage::disk($this->disk)->move($oldPath, $newPath)) {
             return $this->error('Could not move the file or folder.');
         }
 
@@ -326,7 +326,7 @@ class JoditConnectorController extends Controller
 
     protected function actionResize(Request $request): JsonResponse
     {
-        if (! class_exists(Image::class)) {
+        if (!class_exists(Image::class)) {
             return $this->error('Install intervention/image-laravel to enable image resize.');
         }
 
@@ -335,13 +335,13 @@ class JoditConnectorController extends Controller
         $width = (int) $request->input('width', 0);
         $height = (int) $request->input('height', 0);
 
-        if (! $name) {
+        if (!$name) {
             return $this->error('Name is required.');
         }
 
         $filePath = $path.'/'.$name;
 
-        if (! Storage::disk($this->disk)->exists($filePath)) {
+        if (!Storage::disk($this->disk)->exists($filePath)) {
             return $this->error('File not found.');
         }
 
@@ -368,7 +368,7 @@ class JoditConnectorController extends Controller
 
     protected function actionCrop(Request $request): JsonResponse
     {
-        if (! class_exists(Image::class)) {
+        if (!class_exists(Image::class)) {
             return $this->error('Install intervention/image-laravel to enable image crop.');
         }
 
@@ -379,13 +379,13 @@ class JoditConnectorController extends Controller
         $x = (int) $request->input('x', 0);
         $y = (int) $request->input('y', 0);
 
-        if (! $name) {
+        if (!$name) {
             return $this->error('Name is required.');
         }
 
         $filePath = $path.'/'.$name;
 
-        if (! Storage::disk($this->disk)->exists($filePath)) {
+        if (!Storage::disk($this->disk)->exists($filePath)) {
             return $this->error('File not found.');
         }
 
@@ -425,7 +425,7 @@ class JoditConnectorController extends Controller
 
     protected function ensureDirectory(string $path): void
     {
-        if (! Storage::disk($this->disk)->directoryExists($path)) {
+        if (!Storage::disk($this->disk)->directoryExists($path)) {
             Storage::disk($this->disk)->makeDirectory($path);
         }
     }
@@ -441,13 +441,13 @@ class JoditConnectorController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => [
+            'data'    => [
                 'sources' => [
                     [
-                        'name' => 'default',
-                        'path' => $displayPath,
+                        'name'    => 'default',
+                        'path'    => $displayPath,
                         'baseurl' => $baseUrl,
-                        'files' => $files,
+                        'files'   => $files,
                         'folders' => $folderObjects,
                     ],
                 ],
@@ -463,33 +463,33 @@ class JoditConnectorController extends Controller
     protected function getAllowedMimeTypes(string $extensions): array
     {
         $map = [
-            'jpg' => 'image/jpeg',
+            'jpg'  => 'image/jpeg',
             'jpeg' => 'image/jpeg',
-            'png' => 'image/png',
-            'gif' => 'image/gif',
+            'png'  => 'image/png',
+            'gif'  => 'image/gif',
             'webp' => 'image/webp',
-            'bmp' => 'image/bmp',
-            'tif' => 'image/tiff',
+            'bmp'  => 'image/bmp',
+            'tif'  => 'image/tiff',
             'tiff' => 'image/tiff',
-            'ico' => 'image/x-icon',
-            'svg' => 'image/svg+xml',
-            'pdf' => 'application/pdf',
-            'doc' => 'application/msword',
+            'ico'  => 'image/x-icon',
+            'svg'  => 'image/svg+xml',
+            'pdf'  => 'application/pdf',
+            'doc'  => 'application/msword',
             'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'xls' => 'application/vnd.ms-excel',
+            'xls'  => 'application/vnd.ms-excel',
             'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'ppt' => 'application/vnd.ms-powerpoint',
+            'ppt'  => 'application/vnd.ms-powerpoint',
             'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'zip' => 'application/zip',
-            'gz' => 'application/gzip',
-            'rar' => 'application/x-rar-compressed',
-            '7z' => 'application/x-7z-compressed',
-            'txt' => 'text/plain',
-            'csv' => 'text/csv',
+            'zip'  => 'application/zip',
+            'gz'   => 'application/gzip',
+            'rar'  => 'application/x-rar-compressed',
+            '7z'   => 'application/x-7z-compressed',
+            'txt'  => 'text/plain',
+            'csv'  => 'text/csv',
             'json' => 'application/json',
-            'xml' => 'application/xml',
-            'mp3' => 'audio/mpeg',
-            'mp4' => 'video/mp4',
+            'xml'  => 'application/xml',
+            'mp3'  => 'audio/mpeg',
+            'mp4'  => 'video/mp4',
         ];
 
         $mimeTypes = [];
@@ -509,7 +509,7 @@ class JoditConnectorController extends Controller
      */
     protected function sanitizeImage(string $absolutePath): void
     {
-        if (! class_exists(Image::class)) {
+        if (!class_exists(Image::class)) {
             return;
         }
 

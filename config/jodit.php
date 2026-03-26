@@ -13,7 +13,7 @@ return [
     */
 
     'cdn_css' => 'https://unpkg.com/jodit@4.1.16/es2021/jodit.min.css',
-    'cdn_js' => 'https://unpkg.com/jodit@4.1.16/es2021/jodit.min.js',
+    'cdn_js'  => 'https://unpkg.com/jodit@4.1.16/es2021/jodit.min.js',
 
     /*
     |--------------------------------------------------------------------------
@@ -27,7 +27,7 @@ return [
     */
 
     'assets' => [
-        'styles_stack' => 'after-styles',
+        'styles_stack'  => 'after-styles',
         'scripts_stack' => 'after-scripts',
     ],
 
@@ -43,9 +43,9 @@ return [
     */
 
     'route' => [
-        'enabled' => true,
-        'prefix' => 'jodit',
-        'name' => 'jodit.connector',
+        'enabled'    => true,
+        'prefix'     => 'jodit',
+        'name'       => 'jodit.connector',
         'middleware' => ['web', 'auth', 'throttle:60,1'],
     ],
 
@@ -59,8 +59,8 @@ return [
     |
     */
 
-    'disk' => 'public',
-    'base_path' => 'uploads',
+    'disk'           => 'public',
+    'base_path'      => 'uploads',
     'user_directory' => false,
 
     /*
@@ -69,8 +69,8 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'max_file_size' => 10240,  // kilobytes
-    'allowed_mimes' => 'jpeg,jpg,png,gif,webp,pdf,doc,docx,xls,xlsx,zip,txt',
+    'max_file_size'       => 10240,  // kilobytes
+    'allowed_mimes'       => 'jpeg,jpg,png,gif,webp,pdf,doc,docx,xls,xlsx,zip,txt',
     'preserve_file_names' => false,
 
     /*
@@ -98,13 +98,13 @@ return [
     */
 
     'defaults' => [
-        'height' => 400,
-        'toolbarSticky' => true,
-        'toolbarButtonSize' => 'middle',
-        'showCharsCounter' => true,
-        'showWordsCounter' => true,
+        'height'               => 400,
+        'toolbarSticky'        => true,
+        'toolbarButtonSize'    => 'middle',
+        'showCharsCounter'     => true,
+        'showWordsCounter'     => true,
         'showXPathInStatusbar' => true,
-        'hidePoweredByJodit' => true,
+        'hidePoweredByJodit'   => true,
         'defaultActionOnPaste' => 'insert_clear_html',
     ],
 

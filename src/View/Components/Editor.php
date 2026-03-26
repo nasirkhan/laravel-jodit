@@ -22,18 +22,18 @@ class Editor extends Component
     public readonly ?string $resolvedDirectory;
 
     /**
-     * @param  string  $name  textarea name attribute (required)
-     * @param  string|null  $value  initial HTML content
-     * @param  string|null  $id  custom HTML id; defaults to jodit_{name}
-     * @param  string|null  $placeholder  textarea placeholder text
-     * @param  string  $class  extra CSS classes on the textarea element
-     * @param  int  $height  editor height in px (0 = use config default)
-     * @param  bool  $fileBrowser  enable file browser / uploader
-     * @param  string|null  $connectorUrl  override connector endpoint URL
-     * @param  string|null  $wireModel  Livewire model property name for two-way sync
-     * @param  bool  $required  add required attribute to textarea
-     * @param  string|array|null  $buttons  toolbar buttons — array, JSON string, or PHP-style string (null = config default)
-     * @param  int  $debounce  Livewire sync debounce in milliseconds
+     * @param string            $name         textarea name attribute (required)
+     * @param string|null       $value        initial HTML content
+     * @param string|null       $id           custom HTML id; defaults to jodit_{name}
+     * @param string|null       $placeholder  textarea placeholder text
+     * @param string            $class        extra CSS classes on the textarea element
+     * @param int               $height       editor height in px (0 = use config default)
+     * @param bool              $fileBrowser  enable file browser / uploader
+     * @param string|null       $connectorUrl override connector endpoint URL
+     * @param string|null       $wireModel    Livewire model property name for two-way sync
+     * @param bool              $required     add required attribute to textarea
+     * @param string|array|null $buttons      toolbar buttons — array, JSON string, or PHP-style string (null = config default)
+     * @param int               $debounce     Livewire sync debounce in milliseconds
      */
     public function __construct(
         public readonly string $name,
@@ -66,6 +66,7 @@ class Editor extends Component
             $this->connectorUrl = $connectorUrl;
         } elseif ($fileBrowser) {
             $routeName = config('jodit.route.name', 'jodit.connector');
+
             try {
                 $this->connectorUrl = route($routeName);
             } catch (\InvalidArgumentException) {
@@ -87,7 +88,8 @@ class Editor extends Component
      * When $buttons is null, tries a named profile then falls back to
      * the 'buttons' config array.
      *
-     * @param  string|null  $profile  named profile key from config('jodit.profiles')
+     * @param string|null $profile named profile key from config('jodit.profiles')
+     *
      * @return array<int, string>
      */
     private static function parseButtons(string|array|null $buttons, ?string $profile = null): array

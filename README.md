@@ -2,6 +2,7 @@
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/nasirkhan/laravel-jodit.svg?style=flat-square)](https://packagist.org/packages/nasirkhan/laravel-jodit)
 [![Total Downloads](https://img.shields.io/packagist/dt/nasirkhan/laravel-jodit.svg?style=flat-square)](https://packagist.org/packages/nasirkhan/laravel-jodit)
+[![StyleCI](https://github.styleci.io/repos/1188646366/shield?branch=main&style=flat-square)](https://github.styleci.io/repos/1188646366)
 [![License](https://img.shields.io/packagist/l/nasirkhan/laravel-jodit.svg?style=flat-square)](https://packagist.org/packages/nasirkhan/laravel-jodit)
 
 A Laravel package that integrates the [Jodit](https://xdsoft.net/jodit/) WYSIWYG editor via a reusable Blade component. Works seamlessly in plain Blade templates, Blade view components, and Livewire components, with a built-in server-side file browser/uploader connector.
@@ -22,15 +23,11 @@ Tags: `laravel`, `jodit`, `wysiwyg`, `editor`, `blade`, `livewire`, `rich-text`,
 - **Fully configurable** — publish the config to override defaults, CDN URLs, middleware, etc.
 - **Flexible toolbar buttons** — supports named profiles, custom button arrays, separators, and dropdown-friendly controls like `align`
 
----
-
 ## Requirements
 
-- PHP 8.2+
-- Laravel 11/ 12/ 13
+- PHP ^8.2
+- Laravel ^11.0 || ^12.0 || ^13.0
 - `intervention/image-laravel ^1.5` — only required for image **resize** and **crop** features
-
----
 
 ## Installation
 

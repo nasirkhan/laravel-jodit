@@ -1,5 +1,8 @@
 # Laravel Jodit
 
+<p align="center"><img src="https://res.cloudinary.com/dslg1fc8y/image/upload/v1774684410/laravel-jodit-editor-banner_cawmpj.jpg" alt="Laravel Jodit - A WYSIWYG editor package that works seamlessly in plain Blade templates, Blade view components, and Livewire components"></p>
+
+
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/nasirkhan/laravel-jodit.svg?style=flat-square)](https://packagist.org/packages/nasirkhan/laravel-jodit)
 [![Total Downloads](https://img.shields.io/packagist/dt/nasirkhan/laravel-jodit.svg?style=flat-square)](https://packagist.org/packages/nasirkhan/laravel-jodit)
 [![StyleCI](https://github.styleci.io/repos/1188646366/shield?branch=main&style=flat-square)](https://github.styleci.io/repos/1188646366)

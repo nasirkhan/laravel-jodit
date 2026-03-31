@@ -385,31 +385,6 @@ Uses the package's own connector controller. No extra packages required.
 ],
 ```
 
-### `unisharp` — UniSharp Laravel FileManager
-
-Requires [`unisharp/laravel-filemanager`](https://github.com/UniSharp/laravel-filemanager) to be installed and its routes published.
-
-```bash
-composer require unisharp/laravel-filemanager
-php artisan vendor:publish --tag=lfm_public
-```
-
-```php
-// config/jodit.php
-'file_manager' => [
-    'backend' => 'unisharp',
-
-    'unisharp' => [
-        'browse_url'  => '/laravel-filemanager',
-        'upload_url'  => '/laravel-filemanager/upload',
-        'type'        => 'Images',   // 'Images' | 'Files'
-        'window_size' => '900x600',
-    ],
-],
-```
-
-When this backend is active, a **File Manager** toolbar button replaces Jodit's native file browser. Clicking it opens the LFM popup; selecting a file inserts it into the editor automatically.
-
 ### `custom`
 
 Point the editor at any server-side connector that speaks Jodit's filebrowser protocol. Pass the URL via the component's `connector-url` prop, or set `route.name` in the config:

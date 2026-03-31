@@ -207,10 +207,10 @@ class JoditConnectorController extends Controller
 
             $storedPath = $path.'/'.$name;
             if ($this->isImage($name) && !str_ends_with(strtolower($name), '.svg')) {
-                $this->sanitizeImage(Storage::disk($this->disk)->path($storedPath));
+                $this->sanitizeImage($storedPath);
             }
 
-            $uploaded[] = '/storage/'.$path.'/'.$name;
+            $uploaded[] = Storage::disk($this->disk)->url($storedPath);
             $isImages[] = $this->isImage($name);
         }
 
@@ -345,11 +345,20 @@ class JoditConnectorController extends Controller
             return $this->error('File not found.');
         }
 
-        $absolutePath = Storage::disk($this->disk)->path($filePath);
+        if ($width === 0 && $height === 0) {
+            return $this->error('Width or height is required for resize.');
+        }
+
+        $extension = pathinfo($filePath, PATHINFO_EXTENSION) ?: 'tmp';
+        $tempPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.'jodit_'.uniqid().'.'.$extension;
+
+        file_put_contents($tempPath, Storage::disk($this->disk)->get($filePath));
 
         try {
-            $image = Image::read($absolutePath);
+            $image = Image::read($tempPath);
         } catch (\Throwable) {
+            unlink($tempPath);
+
             return $this->error('Could not read image file.');
         }
 
@@ -357,11 +366,13 @@ class JoditConnectorController extends Controller
             $image->scale(width: $width, height: $height);
         } elseif ($width) {
             $image->scale(width: $width);
-        } elseif ($height) {
+        } else {
             $image->scale(height: $height);
         }
 
-        $image->save($absolutePath);
+        $image->save($tempPath);
+        Storage::disk($this->disk)->put($filePath, file_get_contents($tempPath));
+        unlink($tempPath);
 
         return response()->json(['success' => true, 'data' => []]);
     }
@@ -393,16 +404,23 @@ class JoditConnectorController extends Controller
             return $this->error('Width and height are required for crop.');
         }
 
-        $absolutePath = Storage::disk($this->disk)->path($filePath);
+        $extension = pathinfo($filePath, PATHINFO_EXTENSION) ?: 'tmp';
+        $tempPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.'jodit_'.uniqid().'.'.$extension;
+
+        file_put_contents($tempPath, Storage::disk($this->disk)->get($filePath));
 
         try {
-            $image = Image::read($absolutePath);
+            $image = Image::read($tempPath);
         } catch (\Throwable) {
+            unlink($tempPath);
+
             return $this->error('Could not read image file.');
         }
 
         $image->crop($width, $height, $x, $y);
-        $image->save($absolutePath);
+        $image->save($tempPath);
+        Storage::disk($this->disk)->put($filePath, file_get_contents($tempPath));
+        unlink($tempPath);
 
         return response()->json(['success' => true, 'data' => []]);
     }
@@ -436,7 +454,7 @@ class JoditConnectorController extends Controller
     protected function sourceResponse(string $storagePath, array $files, array $folders): JsonResponse
     {
         $displayPath = ltrim(Str::after($storagePath, $this->basePath), '/') ?: '/';
-        $baseUrl = '/storage/'.rtrim($storagePath, '/').'/';
+        $baseUrl = rtrim(Storage::disk($this->disk)->url($storagePath), '/').'/';
         $folderObjects = array_map(fn (string $name): array => ['name' => $name], $folders);
 
         return response()->json([
@@ -507,18 +525,31 @@ class JoditConnectorController extends Controller
      * Strip EXIF metadata and fix orientation for raster images.
      * Silently skipped when intervention/image-laravel is not installed.
      */
-    protected function sanitizeImage(string $absolutePath): void
+    protected function sanitizeImage(string $storagePath): void
     {
         if (!class_exists(Image::class)) {
             return;
         }
 
+        $tempPath = null;
+
         try {
-            $image = Image::read($absolutePath);
+            $extension = pathinfo($storagePath, PATHINFO_EXTENSION) ?: 'tmp';
+            $tempPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.'jodit_'.uniqid().'.'.$extension;
+
+            file_put_contents($tempPath, Storage::disk($this->disk)->get($storagePath));
+
+            $image = Image::read($tempPath);
             $image->orient();
-            $image->save($absolutePath);
+            $image->save($tempPath);
+
+            Storage::disk($this->disk)->put($storagePath, file_get_contents($tempPath));
         } catch (\Throwable) {
             // Non-fatal — leave the original file intact if sanitization fails.
+        } finally {
+            if ($tempPath !== null && file_exists($tempPath)) {
+                unlink($tempPath);
+            }
         }
     }
 

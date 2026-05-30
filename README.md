@@ -13,9 +13,23 @@ A Laravel package that integrates the [Jodit](https://xdsoft.net/jodit/) WYSIWYG
 This package is used in [Laravel Starter](https://github.com/nasirkhan/laravel-starter) though it is framework-agnostic and can be dropped into any Laravel app.
 
 Packagist: [nasirkhan/laravel-jodit](https://packagist.org/packages/nasirkhan/laravel-jodit)  
-Tags: `laravel`, `jodit`, `wysiwyg`, `editor`, `blade`, `livewire`, `rich-text`, `file-browser`
 
 ---
+
+## Preview
+
+### Jodit Editor in Laravel Starter (Tailwind theme)
+
+![Jodit Editor](https://github.com/user-attachments/assets/c6af5945-cf6a-4582-8af3-66865675a285)
+
+### Jodit Editor File Upload Options
+
+![Jodit Editor](https://github.com/user-attachments/assets/83bfdce3-12cc-4efd-a5c2-0d8d1abc5b8e)
+
+### Jodit Editor File Browser
+
+![Jodit Editor](https://github.com/user-attachments/assets/7ecb1c81-3b01-4df4-819d-14e55df54aba)
+
 
 ## Features
 

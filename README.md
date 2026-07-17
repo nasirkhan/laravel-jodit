@@ -44,7 +44,7 @@ Packagist: [nasirkhan/laravel-jodit](https://packagist.org/packages/nasirkhan/la
 
 - PHP ^8.2
 - Laravel ^11.0 || ^12.0 || ^13.0
-- `intervention/image-laravel ^1.5` — only required for image **resize** and **crop** features
+- `intervention/image ^4.0` — bundled as a dependency; powers image **resize** and **crop** features
 
 ## Installation
 

@@ -327,7 +327,7 @@ class JoditConnectorController extends Controller
     protected function actionResize(Request $request): JsonResponse
     {
         if (!class_exists(Image::class)) {
-            return $this->error('Install intervention/image-laravel to enable image resize.');
+            return $this->error('Install intervention/image to enable image resize.');
         }
 
         $path = $this->resolvedPath($request);
@@ -380,7 +380,7 @@ class JoditConnectorController extends Controller
     protected function actionCrop(Request $request): JsonResponse
     {
         if (!class_exists(Image::class)) {
-            return $this->error('Install intervention/image-laravel to enable image crop.');
+            return $this->error('Install intervention/image to enable image crop.');
         }
 
         $path = $this->resolvedPath($request);

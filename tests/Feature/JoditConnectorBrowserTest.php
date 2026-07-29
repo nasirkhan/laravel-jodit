@@ -260,10 +260,9 @@ class JoditConnectorBrowserTest extends TestCase
 
         $this->actingAs($this->user)
             ->post(route('jodit.connector'), [
-                'action'  => 'fileMove',
-                'name'    => 'file.jpg',
-                'path'    => '/',
-                'newpath' => 'archive',
+                'action' => 'fileMove',
+                'from'   => '/file.jpg',
+                'path'   => '/archive/',
             ])
             ->assertStatus(200)
             ->assertJson(['success' => true]);
@@ -276,10 +275,9 @@ class JoditConnectorBrowserTest extends TestCase
     {
         $this->actingAs($this->user)
             ->post(route('jodit.connector'), [
-                'action'  => 'move',
-                'name'    => 'ghost.jpg',
-                'path'    => '/',
-                'newpath' => 'archive',
+                'action' => 'fileMove',
+                'from'   => '/ghost.jpg',
+                'path'   => '/archive/',
             ])
             ->assertStatus(400)
             ->assertJson(['success' => false]);

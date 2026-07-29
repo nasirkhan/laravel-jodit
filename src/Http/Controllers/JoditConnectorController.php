@@ -301,18 +301,30 @@ class JoditConnectorController extends Controller
 
     protected function actionMove(Request $request): JsonResponse
     {
-        $path = $this->resolvedPath($request);
-        $name = basename((string) $request->input('name', ''));
+        $source = (string) $request->input('from', '');
 
-        $rawNewPath = ltrim((string) $request->input('newpath', '/'), '/');
-        $rawNewPath = str_replace(['../', '..'.DIRECTORY_SEPARATOR, '..'], '', $rawNewPath);
-        $newBasePath = trim($this->basePath.'/'.$rawNewPath, '/');
+        if ($source !== '') {
+            $source = $this->sanitizeRelativePath($source);
+            $name = basename($source);
+            $oldPath = trim($this->basePath.'/'.$source, '/');
+            $newBasePath = trim(
+                $this->basePath.'/'.$this->sanitizeRelativePath((string) $request->input('path', '/')),
+                '/',
+            );
+        } else {
+            $path = $this->resolvedPath($request);
+            $name = basename((string) $request->input('name', ''));
+            $oldPath = $path.'/'.$name;
+            $newBasePath = trim(
+                $this->basePath.'/'.$this->sanitizeRelativePath((string) $request->input('newpath', '/')),
+                '/',
+            );
+        }
 
         if (!$name) {
             return $this->error('Name is required.');
         }
 
-        $oldPath = $path.'/'.$name;
         $newPath = $newBasePath.'/'.$name;
 
         if (!Storage::disk($this->disk)->exists($oldPath) && !Storage::disk($this->disk)->directoryExists($oldPath)) {
@@ -439,10 +451,16 @@ class JoditConnectorController extends Controller
      */
     protected function resolvedPath(Request $request): string
     {
-        $relative = ltrim((string) $request->input('path', '/'), '/');
-        $relative = str_replace(['../', '..'.DIRECTORY_SEPARATOR, '..'], '', $relative);
+        $relative = $this->sanitizeRelativePath((string) $request->input('path', '/'));
 
         return trim($this->basePath.'/'.$relative, '/');
+    }
+
+    protected function sanitizeRelativePath(string $path): string
+    {
+        return collect(explode('/', str_replace('\\', '/', $path)))
+            ->reject(fn (string $segment): bool => $segment === '' || $segment === '.' || $segment === '..')
+            ->implode('/');
     }
 
     protected function ensureDirectory(string $path): void

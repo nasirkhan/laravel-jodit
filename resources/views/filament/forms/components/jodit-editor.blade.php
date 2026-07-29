@@ -1,0 +1,24 @@
+<x-dynamic-component
+    :component="$getFieldWrapperView()"
+    :field="$field"
+>
+    <x-jodit::editor
+        :name="$getStatePath()"
+        :id="$getId() . '-jodit-editor'"
+        :value="$getState()"
+        :placeholder="$field->getPlaceholder()"
+        :height="$field->getHeight()"
+        :file-browser="$field->hasFileBrowser()"
+        :connector-url="$field->getConnectorUrl()"
+        :wire-model="$getStatePath()"
+        :required="$field->isRequired()"
+        :buttons="$field->getButtons()"
+        :debounce="$field->getDebounce()"
+        :disk="$field->getDisk()"
+        :directory="$field->getDirectory()"
+        :profile="$field->getProfile()"
+        :readonly="$field->isReadOnly()"
+        :disabled="$field->isDisabled()"
+        :language="$field->getLanguage()"
+    />
+</x-dynamic-component>

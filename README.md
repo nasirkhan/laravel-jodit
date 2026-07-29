@@ -116,6 +116,32 @@ Inside a Livewire component the wrapper is automatically set to `wire:ignore` so
 />
 ```
 
+### 3. Use the optional Filament 5 field
+
+The package does not install Filament. If your application does not already use
+Filament 5, install the Forms package first:
+
+```bash
+composer require filament/forms:^5.0
+```
+
+Import the optional field in your Filament resource or form schema:
+
+```php
+use Nasirkhan\LaravelJodit\Filament\Forms\Components\JoditEditor;
+
+JoditEditor::make('content')
+    ->profile('simple')
+    ->fileBrowser(true)
+    ->height(800)
+    ->columnSpanFull()
+    ->required();
+```
+
+Using `JoditEditor` without `filament/forms` installed throws a descriptive
+exception with the required Composer command. Plain Blade and Livewire usage
+remain available without Filament.
+
 ---
 
 ## Component Props

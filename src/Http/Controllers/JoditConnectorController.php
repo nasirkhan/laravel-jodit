@@ -7,7 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\Laravel\Facades\Image;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Interfaces\ImageManagerInterface;
 
 /**
  * Server-side connector for the Jodit file browser.
@@ -342,14 +345,16 @@ class JoditConnectorController extends Controller
 
     protected function actionResize(Request $request): JsonResponse
     {
-        if (!class_exists(Image::class)) {
-            return $this->error('Install intervention/image to enable image resize.');
+        $imageManager = $this->imageManager();
+
+        if ($imageManager === null) {
+            return $this->error('Install intervention/image and enable GD or Imagick to resize images.');
         }
 
         $path = $this->resolvedPath($request);
         $name = basename((string) $request->input('name', ''));
-        $width = (int) $request->input('width', 0);
-        $height = (int) $request->input('height', 0);
+        $width = (int) $request->input('box.w', $request->input('width', 0));
+        $height = (int) $request->input('box.h', $request->input('height', 0));
 
         if (!$name) {
             return $this->error('Name is required.');
@@ -371,7 +376,7 @@ class JoditConnectorController extends Controller
         file_put_contents($tempPath, Storage::disk($this->disk)->get($filePath));
 
         try {
-            $image = Image::read($tempPath);
+            $image = $imageManager->decodePath($tempPath);
         } catch (\Throwable) {
             unlink($tempPath);
 
@@ -395,16 +400,18 @@ class JoditConnectorController extends Controller
 
     protected function actionCrop(Request $request): JsonResponse
     {
-        if (!class_exists(Image::class)) {
-            return $this->error('Install intervention/image to enable image crop.');
+        $imageManager = $this->imageManager();
+
+        if ($imageManager === null) {
+            return $this->error('Install intervention/image and enable GD or Imagick to crop images.');
         }
 
         $path = $this->resolvedPath($request);
         $name = basename((string) $request->input('name', ''));
-        $width = (int) $request->input('width', 0);
-        $height = (int) $request->input('height', 0);
-        $x = (int) $request->input('x', 0);
-        $y = (int) $request->input('y', 0);
+        $width = (int) $request->input('box.w', $request->input('width', 0));
+        $height = (int) $request->input('box.h', $request->input('height', 0));
+        $x = (int) $request->input('box.x', $request->input('x', 0));
+        $y = (int) $request->input('box.y', $request->input('y', 0));
 
         if (!$name) {
             return $this->error('Name is required.');
@@ -426,7 +433,7 @@ class JoditConnectorController extends Controller
         file_put_contents($tempPath, Storage::disk($this->disk)->get($filePath));
 
         try {
-            $image = Image::read($tempPath);
+            $image = $imageManager->decodePath($tempPath);
         } catch (\Throwable) {
             unlink($tempPath);
 
@@ -468,6 +475,40 @@ class JoditConnectorController extends Controller
         if (!Storage::disk($this->disk)->directoryExists($path)) {
             Storage::disk($this->disk)->makeDirectory($path);
         }
+    }
+
+    protected function imageTargetPath(Request $request, string $path, string $sourceName): ?string
+    {
+        $requestedName = trim((string) $request->input('newname', ''));
+
+        if ($requestedName === '') {
+            return $path.'/'.$sourceName;
+        }
+
+        $requestedName = basename(str_replace('\\', '/', $requestedName));
+
+        if ($requestedName === '' || $requestedName === '.' || $requestedName === '..') {
+            return null;
+        }
+
+        $sourceExtension = pathinfo($sourceName, PATHINFO_EXTENSION);
+
+        if ($sourceExtension !== '' && pathinfo($requestedName, PATHINFO_EXTENSION) === '') {
+            $requestedName .= '.'.$sourceExtension;
+        }
+
+        return $path.'/'.$requestedName;
+    }
+
+    protected function imageManager(): ?ImageManagerInterface
+    {
+        $driver = match (true) {
+            extension_loaded('imagick') => ImagickDriver::class,
+            extension_loaded('gd') => GdDriver::class,
+            default => null,
+        };
+
+        return $driver === null ? null : ImageManager::usingDriver($driver);
     }
 
     /**
@@ -544,11 +585,13 @@ class JoditConnectorController extends Controller
 
     /**
      * Strip EXIF metadata and fix orientation for raster images.
-     * Silently skipped when intervention/image-laravel is not installed.
+     * Silently skipped when image processing is unavailable.
      */
     protected function sanitizeImage(string $storagePath): void
     {
-        if (!class_exists(Image::class)) {
+        $imageManager = $this->imageManager();
+
+        if ($imageManager === null) {
             return;
         }
 
@@ -560,7 +603,7 @@ class JoditConnectorController extends Controller
 
             file_put_contents($tempPath, Storage::disk($this->disk)->get($storagePath));
 
-            $image = Image::read($tempPath);
+            $image = $imageManager->decodePath($tempPath);
             $image->orient();
             $image->save($tempPath);
 

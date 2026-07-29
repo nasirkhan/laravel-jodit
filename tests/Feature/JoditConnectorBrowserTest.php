@@ -3,6 +3,7 @@
 namespace Nasirkhan\LaravelJodit\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Nasirkhan\LaravelJodit\Tests\TestCase;
 use Orchestra\Testbench\Factories\UserFactory;
@@ -297,6 +298,62 @@ class JoditConnectorBrowserTest extends TestCase
             ])
             ->assertStatus(400)
             ->assertJson(['success' => false]);
+    }
+
+    public function test_image_resize_accepts_jodit_box_and_resizes_image(): void
+    {
+        $image = UploadedFile::fake()->image('photo.png', 100, 100);
+        Storage::disk('public')->put('uploads/photo.png', $image->getContent());
+
+        $this->actingAs($this->user)
+            ->post(route('jodit.connector'), [
+                'action' => 'imageResize',
+                'name'   => 'photo.png',
+                'newname' => 'photo.png',
+                'path'   => '/',
+                'box'    => [
+                    'w' => 40,
+                    'h' => 40,
+                ],
+            ])
+            ->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        [$width, $height] = getimagesize(
+            Storage::disk('public')->path('uploads/photo.png'),
+        );
+
+        $this->assertSame(40, $width);
+        $this->assertSame(40, $height);
+    }
+
+    public function test_image_crop_accepts_jodit_box_and_crops_image(): void
+    {
+        $image = UploadedFile::fake()->image('photo.png', 100, 100);
+        Storage::disk('public')->put('uploads/photo.png', $image->getContent());
+
+        $this->actingAs($this->user)
+            ->post(route('jodit.connector'), [
+                'action' => 'imageCrop',
+                'name'   => 'photo.png',
+                'newname' => 'photo.png',
+                'path'   => '/',
+                'box'    => [
+                    'w' => 30,
+                    'h' => 20,
+                    'x' => 5,
+                    'y' => 5,
+                ],
+            ])
+            ->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        [$width, $height] = getimagesize(
+            Storage::disk('public')->path('uploads/photo.png'),
+        );
+
+        $this->assertSame(30, $width);
+        $this->assertSame(20, $height);
     }
 
     // ---------------------------------------------------------------

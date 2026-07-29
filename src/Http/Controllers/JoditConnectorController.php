@@ -159,6 +159,10 @@ class JoditConnectorController extends Controller
             ->values()
             ->all();
 
+        if ($path !== trim($this->basePath, '/')) {
+            array_unshift($folders, '..');
+        }
+
         return $this->sourceResponse($path, [], $folders);
     }
 
@@ -454,8 +458,7 @@ class JoditConnectorController extends Controller
     protected function sourceResponse(string $storagePath, array $files, array $folders): JsonResponse
     {
         $displayPath = ltrim(Str::after($storagePath, $this->basePath), '/') ?: '/';
-        $baseUrl = rtrim(Storage::disk($this->disk)->url($storagePath), '/').'/';
-        $folderObjects = array_map(fn (string $name): array => ['name' => $name], $folders);
+        $baseUrl = rtrim(Storage::disk($this->disk)->url($this->basePath), '/').'/';
 
         return response()->json([
             'success' => true,
@@ -466,7 +469,7 @@ class JoditConnectorController extends Controller
                         'path'    => $displayPath,
                         'baseurl' => $baseUrl,
                         'files'   => $files,
-                        'folders' => $folderObjects,
+                        'folders' => $folders,
                     ],
                 ],
             ],

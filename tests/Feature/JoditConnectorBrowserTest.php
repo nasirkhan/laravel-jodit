@@ -75,6 +75,32 @@ class JoditConnectorBrowserTest extends TestCase
         $this->assertSame('photo.jpg', $files[0]['file']);
     }
 
+    public function test_files_action_keeps_folder_in_file_url(): void
+    {
+        Storage::disk('public')->put('uploads/gallery/photo.jpg', 'content');
+
+        $response = $this->actingAs($this->user)
+            ->post(route('jodit.connector'), [
+                'action' => 'files',
+                'path'   => '/gallery/',
+                'type'   => 'images',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.sources.0.baseurl', '/storage/uploads/')
+            ->assertJsonPath('data.sources.0.path', 'gallery')
+            ->assertJsonPath('data.sources.0.files.0.file', 'photo.jpg');
+
+        $source = $response->json('data.sources.0');
+        $fileUrl = implode('/', [
+            rtrim($source['baseurl'], '/'),
+            trim($source['path'], '/'),
+            $source['files'][0]['file'],
+        ]);
+
+        $this->assertSame('/storage/uploads/gallery/photo.jpg', $fileUrl);
+    }
+
     public function test_files_action_creates_directory_when_missing(): void
     {
         $this->actingAs($this->user)
@@ -100,10 +126,34 @@ class JoditConnectorBrowserTest extends TestCase
             ->assertJson(['success' => true]);
 
         $folders = $response->json('data.sources.0.folders');
-        $folderNames = array_column($folders, 'name');
 
-        $this->assertContains('images', $folderNames);
-        $this->assertContains('docs', $folderNames);
+        $this->assertContains('images', $folders);
+        $this->assertContains('docs', $folders);
+        $this->assertNotContains('..', $folders);
+
+        foreach ($folders as $folder) {
+            $this->assertIsString($folder);
+        }
+    }
+
+    public function test_folders_action_includes_parent_folder_outside_root(): void
+    {
+        Storage::disk('public')->makeDirectory('uploads/images/originals');
+
+        $response = $this->actingAs($this->user)
+            ->post(route('jodit.connector'), [
+                'action' => 'folders',
+                'path'   => '/images/',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.sources.0.path', 'images')
+            ->assertJsonPath('data.sources.0.folders.0', '..');
+
+        $this->assertContains(
+            'originals',
+            $response->json('data.sources.0.folders'),
+        );
     }
 
     // ---------------------------------------------------------------
@@ -139,6 +189,24 @@ class JoditConnectorBrowserTest extends TestCase
             ])
             ->assertStatus(400)
             ->assertJson(['success' => false]);
+    }
+
+    public function test_folder_rename_action_renames_folder(): void
+    {
+        Storage::disk('public')->put('uploads/old-folder/file.txt', 'content');
+
+        $this->actingAs($this->user)
+            ->post(route('jodit.connector'), [
+                'action'  => 'folderRename',
+                'name'    => 'old-folder',
+                'newname' => 'new-folder',
+                'path'    => '/',
+            ])
+            ->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        Storage::disk('public')->assertMissing('uploads/old-folder');
+        Storage::disk('public')->assertExists('uploads/new-folder/file.txt');
     }
 
     public function test_rename_action_returns_error_when_names_are_missing(): void

@@ -370,6 +370,12 @@ class JoditConnectorController extends Controller
             return $this->error('Width or height is required for resize.');
         }
 
+        $targetPath = $this->imageTargetPath($request, $path, $name);
+
+        if ($targetPath === null) {
+            return $this->error('New name is invalid.');
+        }
+
         $extension = pathinfo($filePath, PATHINFO_EXTENSION) ?: 'tmp';
         $tempPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.'jodit_'.uniqid().'.'.$extension;
 
@@ -392,7 +398,7 @@ class JoditConnectorController extends Controller
         }
 
         $image->save($tempPath);
-        Storage::disk($this->disk)->put($filePath, file_get_contents($tempPath));
+        Storage::disk($this->disk)->put($targetPath, file_get_contents($tempPath));
         unlink($tempPath);
 
         return response()->json(['success' => true, 'data' => []]);
@@ -427,6 +433,12 @@ class JoditConnectorController extends Controller
             return $this->error('Width and height are required for crop.');
         }
 
+        $targetPath = $this->imageTargetPath($request, $path, $name);
+
+        if ($targetPath === null) {
+            return $this->error('New name is invalid.');
+        }
+
         $extension = pathinfo($filePath, PATHINFO_EXTENSION) ?: 'tmp';
         $tempPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.'jodit_'.uniqid().'.'.$extension;
 
@@ -442,7 +454,7 @@ class JoditConnectorController extends Controller
 
         $image->crop($width, $height, $x, $y);
         $image->save($tempPath);
-        Storage::disk($this->disk)->put($filePath, file_get_contents($tempPath));
+        Storage::disk($this->disk)->put($targetPath, file_get_contents($tempPath));
         unlink($tempPath);
 
         return response()->json(['success' => true, 'data' => []]);

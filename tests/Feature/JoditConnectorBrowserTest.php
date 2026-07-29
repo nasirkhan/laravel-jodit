@@ -327,6 +327,41 @@ class JoditConnectorBrowserTest extends TestCase
         $this->assertSame(40, $height);
     }
 
+    public function test_image_resize_save_as_creates_copy_without_modifying_source(): void
+    {
+        $image = UploadedFile::fake()->image('photo.png', 100, 100);
+        Storage::disk('public')->put('uploads/gallery/photo.png', $image->getContent());
+
+        $this->actingAs($this->user)
+            ->post(route('jodit.connector'), [
+                'action'  => 'imageResize',
+                'name'    => 'photo.png',
+                'newname' => 'resized-photo',
+                'path'    => '/gallery/',
+                'box'     => [
+                    'w' => 40,
+                    'h' => 40,
+                ],
+            ])
+            ->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        Storage::disk('public')->assertExists('uploads/gallery/photo.png');
+        Storage::disk('public')->assertExists('uploads/gallery/resized-photo.png');
+
+        [$sourceWidth, $sourceHeight] = getimagesize(
+            Storage::disk('public')->path('uploads/gallery/photo.png'),
+        );
+        [$copyWidth, $copyHeight] = getimagesize(
+            Storage::disk('public')->path('uploads/gallery/resized-photo.png'),
+        );
+
+        $this->assertSame(100, $sourceWidth);
+        $this->assertSame(100, $sourceHeight);
+        $this->assertSame(40, $copyWidth);
+        $this->assertSame(40, $copyHeight);
+    }
+
     public function test_image_crop_accepts_jodit_box_and_crops_image(): void
     {
         $image = UploadedFile::fake()->image('photo.png', 100, 100);
@@ -354,6 +389,43 @@ class JoditConnectorBrowserTest extends TestCase
 
         $this->assertSame(30, $width);
         $this->assertSame(20, $height);
+    }
+
+    public function test_image_crop_save_as_creates_copy_without_modifying_source(): void
+    {
+        $image = UploadedFile::fake()->image('photo.png', 100, 100);
+        Storage::disk('public')->put('uploads/photo.png', $image->getContent());
+
+        $this->actingAs($this->user)
+            ->post(route('jodit.connector'), [
+                'action'  => 'imageCrop',
+                'name'    => 'photo.png',
+                'newname' => 'cropped-photo',
+                'path'    => '/',
+                'box'     => [
+                    'w' => 30,
+                    'h' => 20,
+                    'x' => 5,
+                    'y' => 5,
+                ],
+            ])
+            ->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        Storage::disk('public')->assertExists('uploads/photo.png');
+        Storage::disk('public')->assertExists('uploads/cropped-photo.png');
+
+        [$sourceWidth, $sourceHeight] = getimagesize(
+            Storage::disk('public')->path('uploads/photo.png'),
+        );
+        [$copyWidth, $copyHeight] = getimagesize(
+            Storage::disk('public')->path('uploads/cropped-photo.png'),
+        );
+
+        $this->assertSame(100, $sourceWidth);
+        $this->assertSame(100, $sourceHeight);
+        $this->assertSame(30, $copyWidth);
+        $this->assertSame(20, $copyHeight);
     }
 
     // ---------------------------------------------------------------

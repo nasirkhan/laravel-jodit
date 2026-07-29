@@ -37,6 +37,22 @@ class JoditConnectorBrowserTest extends TestCase
             ->assertRedirect('/login');
     }
 
+    public function test_editor_configures_filebrowser_response_handlers_at_filebrowser_level(): void
+    {
+        $html = (string) $this->blade(
+            '<x-jodit::editor name="content" /> @stack("after-scripts")',
+        );
+
+        $this->assertMatchesRegularExpression(
+            '/cfg\.filebrowser\s*=\s*\{\s*isSuccess:\s*function.*?getMessage:\s*function.*?ajax:\s*\{/s',
+            $html,
+        );
+        $this->assertDoesNotMatchRegularExpression(
+            '/ajax:\s*\{.*?isSuccess:\s*function.*?getMessage:\s*function/s',
+            $html,
+        );
+    }
+
     // ---------------------------------------------------------------
     // Files listing
     // ---------------------------------------------------------------

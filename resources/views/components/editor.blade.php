@@ -115,12 +115,12 @@
                 };
 
                 cfg.filebrowser = {
+                    isSuccess:  function (r) { return !!r.success; },
+                    getMessage: function (r) { return r.message || ''; },
                     ajax: {
-                        url:        CONNECTOR,
-                        headers:    { 'X-CSRF-TOKEN': csrfToken },
-                        data:       instanceData(),
-                        isSuccess:  function (r) { return !!r.success; },
-                        getMessage: function (r) { return r.message || ''; },
+                        url:     CONNECTOR,
+                        headers: { 'X-CSRF-TOKEN': csrfToken },
+                        data:    instanceData(),
                     },
                     uploader: {
                         url:     CONNECTOR + '?action=upload',

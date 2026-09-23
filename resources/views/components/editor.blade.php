@@ -118,7 +118,7 @@
                     ajax: {
                         url:        CONNECTOR,
                         headers:    { 'X-CSRF-TOKEN': csrfToken },
-                        data:       instanceData(),
+                        data:       Object.assign({ type: 'all' }, instanceData()),
                         isSuccess:  function (r) { return !!r.success; },
                         getMessage: function (r) { return r.message || ''; },
                     },
@@ -172,26 +172,6 @@
         var metaEl    = document.querySelector('meta[name="csrf-token"]');
         var csrfToken = metaEl ? metaEl.getAttribute('content') : '';
         var editor    = Jodit.make(el, buildConfig(csrfToken));
-
-        // Patch the filebrowser's open() so each invocation tells the backend
-        // whether it was triggered from the image button (type=images) or the
-        // file button (type=files), enabling server-side filtering.
-        if (WITH_BROWSER && CONNECTOR) {
-            var fb = editor.filebrowser;
-            if (fb && typeof fb.open === 'function') {
-                var _origFbOpen = fb.open.bind(fb);
-                fb.open = function (callback, onlyImages) {
-                    if (fb.options && fb.options.ajax) {
-                        fb.options.ajax.data = Object.assign(
-                            {},
-                            instanceData(),
-                            { type: onlyImages ? 'images' : 'files' }
-                        );
-                    }
-                    return _origFbOpen(callback, onlyImages);
-                };
-            }
-        }
 
         // Sync content changes back to Livewire (debounced)
         if (WIRE_MODEL && window.Livewire) {

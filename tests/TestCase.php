@@ -9,7 +9,10 @@ class TestCase extends Orchestra
 {
     protected function getPackageProviders($app): array
     {
-        return [JoditServiceProvider::class];
+        return [
+            \Intervention\Image\Laravel\ServiceProvider::class,
+            JoditServiceProvider::class,
+        ];
     }
 
     protected function defineEnvironment($app): void

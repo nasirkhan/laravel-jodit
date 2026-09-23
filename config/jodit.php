@@ -65,12 +65,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Allowed Disks
+    |--------------------------------------------------------------------------
+    |
+    | Explicit allowlist of disks that an authenticated user may request via
+    | the per-instance `disk` parameter. Prevents access to arbitrary disks
+    | (e.g. s3, ftp) configured in filesystems.php.
+    |
+    */
+
+    'allowed_disks' => ['public'],
+
+    /*
+    |--------------------------------------------------------------------------
     | Upload Constraints
     |--------------------------------------------------------------------------
     */
 
     'max_file_size'       => 10240,  // kilobytes
-    'allowed_mimes'       => 'jpeg,jpg,png,gif,webp,pdf,doc,docx,xls,xlsx,zip,txt',
+    'allowed_mimes'       => 'jpeg,jpg,png,gif,webp,avif,pdf,doc,docx,xls,xlsx,zip,txt',
     'preserve_file_names' => false,
 
     /*

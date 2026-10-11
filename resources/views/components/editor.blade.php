@@ -210,15 +210,26 @@
     // Bootstrap
     // ------------------------------------------------------------------
 
+    // When navigating via wire:navigate the CDN script is injected via JS,
+    // which loads asynchronously even without the async attribute. Poll until
+    // Jodit is available rather than silently exiting.
+    function whenJoditReady(fn) {
+        if (typeof Jodit !== 'undefined') {
+            fn();
+        } else {
+            setTimeout(function () { whenJoditReady(fn); }, 50);
+        }
+    }
+
     // Run when the DOM (and Jodit script) are ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initEditor);
+        document.addEventListener('DOMContentLoaded', function () { whenJoditReady(initEditor); });
     } else {
-        initEditor();
+        whenJoditReady(initEditor);
     }
 
     // Re-initialise after Livewire SPA navigations
-    document.addEventListener('livewire:navigated', initEditor);
+    document.addEventListener('livewire:navigated', function () { whenJoditReady(initEditor); });
 }());
 </script>
 @endpush

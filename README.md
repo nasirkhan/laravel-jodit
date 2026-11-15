@@ -37,6 +37,7 @@ Packagist: [nasirkhan/laravel-jodit](https://packagist.org/packages/nasirkhan/la
 - **Livewire-ready** — pass `wire-model` and the editor syncs with your Livewire component
 - **File browser + uploads** — bundled connector controller; configurable storage disk and path
 - **CDN assets** — loads Jodit CSS/JS from unpkg; no build step required
+- **Dark mode aware** — automatically matches the site theme; follows live theme toggles via the `dark` class on `<html>`
 - **Fully configurable** — publish the config to override defaults, CDN URLs, middleware, etc.
 - **Flexible toolbar buttons** — supports named profiles, custom button arrays, separators, and dropdown-friendly controls like `align`
 
@@ -262,6 +263,29 @@ Or set a global default in `config/jodit.php`:
 'route' => [
     'enabled' => false,
     'name'    => 'backend.jodit.connector',  // used by component when no connector-url prop
+],
+```
+
+---
+
+## Dark Mode
+
+The editor automatically matches your site's theme. It detects dark mode from the
+`dark` class on the `<html>` element (the Tailwind/Flowbite class strategy used by
+Laravel Starter) and initialises Jodit with `theme: 'dark'`.
+
+It also follows **live** theme toggles: a `MutationObserver` watches the `dark`
+class on `<html>`, so switching the theme without reloading the page updates the
+editor chrome and editing area immediately — no configuration required.
+
+If you toggle dark mode a different way, make sure the `dark` class ends up on
+`document.documentElement`. You can set a non-dark default theme via config:
+
+```php
+// config/jodit.php
+'defaults' => [
+    // ...
+    'theme' => 'default', // used when the site is NOT in dark mode
 ],
 ```
 

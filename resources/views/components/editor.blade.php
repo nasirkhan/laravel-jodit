@@ -75,12 +75,25 @@
     }
 
     // ------------------------------------------------------------------
+    // Dark mode detection
+    // ------------------------------------------------------------------
+    // The host site toggles dark mode with a `dark` class on <html>
+    // (Tailwind/Flowbite class strategy). Jodit uses theme: 'dark', which
+    // applies the `jodit_theme_dark` class to the editor container.
+    function isDarkMode() {
+        return document.documentElement.classList.contains('dark');
+    }
+
+    // ------------------------------------------------------------------
     // Build the Jodit config object
     // ------------------------------------------------------------------
     function buildConfig(csrfToken) {
         var cfg = Object.assign({}, DEFAULTS, {
             height:  HEIGHT,
             buttons: BUTTONS,
+            // Match the editor chrome to the current site theme. Falls back to
+            // any theme set in config('jodit.defaults') when not in dark mode.
+            theme:   isDarkMode() ? 'dark' : (DEFAULTS.theme || 'default'),
         });
 
         if (READONLY) { cfg.readonly = true; }
@@ -168,10 +181,35 @@
         if (el._jodit && typeof el._jodit.destruct === 'function') {
             el._jodit.destruct();
         }
+        // Stop watching the theme for the previous instance, if any.
+        if (el._joditThemeObserver) {
+            el._joditThemeObserver.disconnect();
+            el._joditThemeObserver = null;
+        }
 
         var metaEl    = document.querySelector('meta[name="csrf-token"]');
         var csrfToken = metaEl ? metaEl.getAttribute('content') : '';
         var editor    = Jodit.make(el, buildConfig(csrfToken));
+
+        // Follow live theme switches (toggled without a page reload) by
+        // watching the `dark` class on <html> and syncing the editor container.
+        var applyTheme = function () {
+            if (editor.container) {
+                editor.container.classList.toggle('jodit_theme_dark', isDarkMode());
+            }
+        };
+        var themeObserver = new MutationObserver(applyTheme);
+        themeObserver.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+        el._joditThemeObserver = themeObserver;
+
+        // Disconnect the observer when Jodit is destroyed.
+        editor.events.on('beforeDestruct', function () {
+            themeObserver.disconnect();
+            el._joditThemeObserver = null;
+        });
 
         // Patch the filebrowser's open() so each invocation tells the backend
         // whether it was triggered from the image button (type=images) or the

@@ -23,12 +23,13 @@
   "homepage": "https://github.com/nasirkhan/laravel-jodit",
   "require": {
     "php": "^8.3 || ^8.4",
-    "illuminate/support": "^11.0|^12.0|^13.0",
-    "illuminate/view": "^11.0|^12.0|^13.0",
-    "illuminate/routing": "^11.0|^12.0|^13.0",
     "illuminate/filesystem": "^11.0|^12.0|^13.0",
     "illuminate/http": "^11.0|^12.0|^13.0",
-    "intervention/image": "^4.0"
+    "illuminate/routing": "^11.0|^12.0|^13.0",
+    "illuminate/support": "^11.0|^12.0|^13.0",
+    "illuminate/view": "^11.0|^12.0|^13.0",
+    "intervention/image": "^4.0",
+    "intervention/image-laravel": "^4.0"
   },
   "require-dev": {
     "orchestra/testbench": "^9.0|^10.0|^11.0",

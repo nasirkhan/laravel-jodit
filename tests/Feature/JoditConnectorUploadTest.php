@@ -12,7 +12,7 @@ class JoditConnectorUploadTest extends TestCase
 {
     use RefreshDatabase;
 
-    private $user;
+    private ?\Illuminate\Contracts\Auth\Authenticatable $user = null;
 
     protected function setUp(): void
     {
